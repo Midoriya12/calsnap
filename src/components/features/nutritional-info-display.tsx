@@ -50,7 +50,28 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
   };
 
-  const { dishName, estimatedCalories, identifiedIngredients, generatedRecipe } = estimation;
+  const { 
+    dishName, 
+    estimatedCalories, 
+    identifiedIngredients, 
+    generatedRecipe 
+  } = estimation;
+
+  // Default to empty arrays if properties are undefined
+  const currentIdentifiedIngredients = identifiedIngredients || [];
+  
+  const currentGeneratedRecipe = generatedRecipe || { 
+    name: 'Recipe Details Unavailable', 
+    description: 'The AI could not generate a detailed recipe at this time.', 
+    preparationTime: 'N/A', 
+    cookingTime: 'N/A', 
+    servings: 'N/A', 
+    ingredientsList: [], 
+    instructionsList: [] 
+  };
+  
+  const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
+  const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
 
   return (
     <Card className="w-full shadow-lg">
@@ -74,16 +95,16 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories (Whole Meal)</h3>
           <Badge variant="secondary" className="text-lg px-3 py-1 bg-accent/20 text-accent-foreground">
-            {estimatedCalories} kcal
+            {estimatedCalories || 0} kcal
           </Badge>
         </div>
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients (Identified in Photo)</h3>
           <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see nutritional details from USDA.</p>
-          {identifiedIngredients.length > 0 ? (
+          {currentIdentifiedIngredients.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {identifiedIngredients.map((ingredient, index) => (
+              {currentIdentifiedIngredients.map((ingredient, index) => (
                 <Badge
                   key={`${ingredient}-${index}`} 
                   variant="outline"
@@ -148,25 +169,25 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
         
         <div>
-          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-primary"><BookOpen /> AI Generated Recipe: {generatedRecipe.name}</h3>
+          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-primary"><BookOpen /> AI Generated Recipe: {currentGeneratedRecipe.name}</h3>
           
-          <p className="text-md text-muted-foreground mb-4">{generatedRecipe.description}</p>
+          <p className="text-md text-muted-foreground mb-4">{currentGeneratedRecipe.description}</p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-6">
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Clock size={20} className="text-accent mb-1" />
               <span className="font-semibold">Prep Time</span>
-              <span>{generatedRecipe.preparationTime}</span>
+              <span>{currentGeneratedRecipe.preparationTime}</span>
             </div>
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <ChefHat size={20} className="text-accent mb-1" />
               <span className="font-semibold">Cook Time</span>
-              <span>{generatedRecipe.cookingTime}</span>
+              <span>{currentGeneratedRecipe.cookingTime}</span>
             </div>
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Users size={20} className="text-accent mb-1" />
               <span className="font-semibold">Servings</span>
-              <span>{generatedRecipe.servings}</span>
+              <span>{currentGeneratedRecipe.servings}</span>
             </div>
           </div>
           
@@ -174,22 +195,30 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
               <ListChecks /> Recipe Ingredients
             </h4>
-            <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
-              {generatedRecipe.ingredientsList.map((ingredient, index) => (
-                <li key={`recipe-ing-${index}`}>{ingredient}</li>
-              ))}
-            </ul>
+            {currentRecipeIngredientsList.length > 0 ? (
+              <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
+                {currentRecipeIngredientsList.map((ingredient, index) => (
+                  <li key={`recipe-ing-${index}`}>{ingredient}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No ingredients listed for this recipe by the AI.</p>
+            )}
           </div>
 
           <div>
             <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
               <ListChecks /> Recipe Instructions
             </h4>
-            <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
-              {generatedRecipe.instructionsList.map((step, index) => (
-                <li key={`recipe-instr-${index}`}>{step}</li>
-              ))}
-            </ol>
+            {currentRecipeInstructionsList.length > 0 ? (
+              <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
+                {currentRecipeInstructionsList.map((step, index) => (
+                  <li key={`recipe-instr-${index}`}>{step}</li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-sm text-muted-foreground">No instructions provided for this recipe by the AI.</p>
+            )}
           </div>
         </div>
 
