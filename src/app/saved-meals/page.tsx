@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMealStorage } from '@/hooks/use-meal-storage';
@@ -12,45 +12,54 @@ import { AlertCircle, Archive, ChevronLeft, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SavedMealsPage() {
-  const { user } = useAuth(); // AuthProvider handles initial auth loading state
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { savedMeals, deleteMeal, isLocalStorageReady } = useMealStorage();
-  const [isLoadingPageData, setIsLoadingPageData] = useState(true); // For loading meal data specifically
+  const { 
+    savedMeals, 
+    deleteMeal, 
+    isLoading: mealsLoading, 
+    error: mealsError,
+    getSavedMeals // Exposing this for manual refresh if ever needed
+  } = useMealStorage();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // AuthProvider handles initial auth state determination.
-    // This effect redirects if user is not logged in after AuthProvider is done.
-    if (user === null) { // user is explicitly null, meaning auth check is done and no user
+    if (!authLoading && !user) {
       router.push('/login?redirect=/saved-meals');
-    } else if (user) { // user exists
-      // User is authenticated, proceed to load meal data logic
-      if (isLocalStorageReady) {
-        setIsLoadingPageData(false);
-      }
     }
-    // If user is undefined, it means AuthProvider is still determining state.
-    // AuthProvider shows a global loader, so this page doesn't need to show another one for auth.
-  }, [user, router, isLocalStorageReady]);
+  }, [user, authLoading, router]);
 
-  // Secondary effect to handle isLocalStorageReady changing after auth is confirmed and user exists
+  // Optionally, show a toast if there's an error loading meals
   useEffect(() => {
-    if (user && isLocalStorageReady) {
-        setIsLoadingPageData(false);
+    if (mealsError) {
+      toast({
+        title: "Error Loading Meals",
+        description: mealsError,
+        variant: "destructive",
+      });
     }
-  }, [user, isLocalStorageReady]);
+  }, [mealsError, toast]);
 
-
-  const handleDeleteMeal = (mealId: string) => {
-    deleteMeal(mealId);
-    // Optionally add a toast notification here
+  const handleDeleteMeal = async (mealId: string) => {
+    const success = await deleteMeal(mealId);
+    if (success) {
+      toast({
+        title: 'Meal Deleted',
+        description: 'The meal has been removed from your saved list.',
+      });
+    } else {
+      toast({
+        title: 'Delete Failed',
+        description: 'Could not delete the meal. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  // If user is null, it means the useEffect for redirection should handle it.
-  // Show a loader to prevent flash of content before redirect.
-  // AuthProvider handles the very initial full-page load.
-  if (user === null) {
+  if (authLoading || (!user && !authLoading)) { // Show loader if auth is loading or redirect is imminent
     return (
       <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
@@ -61,21 +70,6 @@ export default function SavedMealsPage() {
     );
   }
   
-  // If user is undefined, AuthProvider is still loading.
-  // This case should ideally be covered by AuthProvider's loader not rendering children.
-  // However, to be safe, if we reach here and user is still undefined, show loader.
-  if (user === undefined) {
-     return (
-      <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <div className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
-
-  // At this point, user should be authenticated (user object exists)
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
@@ -94,14 +88,14 @@ export default function SavedMealsPage() {
 
         <Separator className="mb-8" />
 
-        {isLoadingPageData && (
+        {mealsLoading && (
           <div className="flex flex-col items-center justify-center text-center py-10">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading your saved meals...</p>
+            <p className="text-muted-foreground">Loading your saved meals from the cloud...</p>
           </div>
         )}
 
-        {!isLoadingPageData && savedMeals.length === 0 && (
+        {!mealsLoading && !mealsError && savedMeals.length === 0 && (
           <div className="text-center py-10">
             <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">No Saved Meals Yet</h2>
@@ -116,7 +110,7 @@ export default function SavedMealsPage() {
           </div>
         )}
 
-        {!isLoadingPageData && savedMeals.length > 0 && (
+        {!mealsLoading && !mealsError && savedMeals.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {savedMeals.map((meal) => (
               <SavedMealCard
@@ -126,6 +120,18 @@ export default function SavedMealsPage() {
               />
             ))}
           </div>
+        )}
+
+         {!mealsLoading && mealsError && (
+            <Alert variant="destructive" className="my-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Could Not Load Meals</AlertTitle>
+              <AlertDescription>
+                There was an issue fetching your saved meals from the cloud. Please try again later.
+                <br />
+                Error: {mealsError}
+              </AlertDescription>
+            </Alert>
         )}
       </main>
       <footer className="text-center text-muted-foreground text-sm py-8 border-t mt-8">

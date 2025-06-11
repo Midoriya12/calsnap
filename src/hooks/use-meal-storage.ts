@@ -1,90 +1,119 @@
 
 'use client';
 
-import type { SavedMeal } from '@/types';
+import type { SavedMeal, NewSavedMealData } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
-
-const MEALS_STORAGE_KEY = 'calSnapSavedMeals';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 export function useMealStorage() {
+  const { user } = useAuth();
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
-  const [isLocalStorageReady, setIsLocalStorageReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getSavedMeals = useCallback(async () => {
+    if (!user) {
+      setSavedMeals([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const mealsCollectionRef = collection(db, `users/${user.uid}/savedMeals`);
+      const q = query(mealsCollectionRef, orderBy('savedAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const meals = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Ensure savedAt is a string if it's a Firestore Timestamp
+          savedAt: data.savedAt instanceof Timestamp ? data.savedAt.toDate().toISOString() : data.savedAt,
+        } as SavedMeal;
+      });
+      setSavedMeals(meals);
+    } catch (err) {
+      console.error("Error fetching saved meals from Firestore:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch saved meals.");
+      setSavedMeals([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    // Ensure localStorage is accessed only on the client side
-    setIsLocalStorageReady(true);
-    if (typeof window !== 'undefined') {
-      try {
-        const storedMeals = localStorage.getItem(MEALS_STORAGE_KEY);
-        if (storedMeals) {
-          setSavedMeals(JSON.parse(storedMeals));
-        }
-      } catch (error) {
-        console.error("Error reading saved meals from localStorage:", error);
-        // localStorage.removeItem(MEALS_STORAGE_KEY);
-      }
+    // Fetch meals when user changes (e.g., on login/logout) or component mounts with a user
+    if (user) {
+      getSavedMeals();
+    } else {
+      setSavedMeals([]); // Clear meals if user logs out
     }
-  }, []);
+  }, [user, getSavedMeals]);
 
-  const saveMeal = useCallback((newMeal: Omit<SavedMeal, 'id' | 'savedAt'>) => {
-    if (!isLocalStorageReady) return false;
+  const saveMeal = async (newMealData: Omit<NewSavedMealData, 'userId' | 'savedAt'>) => {
+    if (!user) {
+      setError("User not authenticated. Cannot save meal.");
+      return null;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const mealWithTimestamp: SavedMeal = {
-        ...newMeal,
-        id: new Date().toISOString() + '-' + Math.random().toString(36).substring(2, 9),
-        savedAt: new Date().toISOString(),
+      const mealToSave: NewSavedMealData = {
+        ...newMealData,
+        userId: user.uid,
+        savedAt: new Date().toISOString(), // Or use serverTimestamp()
       };
-      // Prepend new meal to the list
-      const updatedMeals = [mealWithTimestamp, ...savedMeals];
-      localStorage.setItem(MEALS_STORAGE_KEY, JSON.stringify(updatedMeals));
-      setSavedMeals(updatedMeals);
-      return true;
-    } catch (error) {
-      console.error("Error saving meal to localStorage:", error);
+      const mealsCollectionRef = collection(db, `users/${user.uid}/savedMeals`);
+      // @ts-ignore
+      const docRef = await addDoc(mealsCollectionRef, {
+        ...mealToSave,
+        savedAt: serverTimestamp() // Use server timestamp for consistency
+      });
+      
+      // Optimistically add to local state or refetch
+      // For simplicity, we'll refetch, but optimistic updates are better for UX
+      await getSavedMeals(); 
+      return docRef.id;
+
+    } catch (err) {
+      console.error("Error saving meal to Firestore:", err);
+      setError(err instanceof Error ? err.message : "Failed to save meal.");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteMeal = async (mealId: string) => {
+    if (!user) {
+      setError("User not authenticated. Cannot delete meal.");
       return false;
     }
-  }, [savedMeals, isLocalStorageReady]);
-
-  const getSavedMeals = useCallback((): SavedMeal[] => {
-    if (!isLocalStorageReady) return [];
+    setIsLoading(true);
+    setError(null);
     try {
-      const storedMeals = localStorage.getItem(MEALS_STORAGE_KEY);
-      const meals = storedMeals ? JSON.parse(storedMeals) : [];
-      // Ensure meals are sorted by savedAt descending (newest first)
-      return meals.sort((a: SavedMeal, b: SavedMeal) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
-    } catch (error) {
-      console.error("Error retrieving saved meals from localStorage:", error);
-      return [];
-    }
-  }, [isLocalStorageReady]);
-  
-  const deleteMeal = useCallback((mealId: string) => {
-    if (!isLocalStorageReady) return false;
-    try {
-      const updatedMeals = savedMeals.filter(meal => meal.id !== mealId);
-      localStorage.setItem(MEALS_STORAGE_KEY, JSON.stringify(updatedMeals));
-      setSavedMeals(updatedMeals);
+      const mealDocRef = doc(db, `users/${user.uid}/savedMeals`, mealId);
+      await deleteDoc(mealDocRef);
+      // Optimistically remove from local state or refetch
+      setSavedMeals(prevMeals => prevMeals.filter(meal => meal.id !== mealId));
       return true;
-    } catch (error) {
-      console.error("Error deleting meal from localStorage:", error);
+    } catch (err) {
+      console.error("Error deleting meal from Firestore:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete meal.");
       return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [savedMeals, isLocalStorageReady]);
+  };
 
-  // Update savedMeals state when getSavedMeals is called and localStorage might have changed elsewhere
-  useEffect(() => {
-    if (isLocalStorageReady) {
-        const currentMealsFromStorage = getSavedMeals();
-        // Simple check to see if arrays are different based on length or first/last ID
-        // More sophisticated checks might be needed for complex scenarios
-        if (currentMealsFromStorage.length !== savedMeals.length || 
-            (currentMealsFromStorage.length > 0 && savedMeals.length > 0 && currentMealsFromStorage[0].id !== savedMeals[0].id)) {
-            setSavedMeals(currentMealsFromStorage);
-        }
-    }
-  }, [isLocalStorageReady, getSavedMeals]);
-
-
-  return { saveMeal, getSavedMeals, savedMeals, deleteMeal, isLocalStorageReady };
+  return { 
+    saveMeal, 
+    getSavedMeals, // Expose for manual refresh if needed
+    savedMeals, 
+    deleteMeal, 
+    isLoading, 
+    error 
+  };
 }
-

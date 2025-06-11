@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { AIEstimation, IngredientNutritionInfo, SavedMeal } from '@/types';
+import type { AIEstimation, IngredientNutritionInfo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,19 +12,22 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMealStorage } from '@/hooks/use-meal-storage';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
 
 
 interface NutritionalInfoDisplayProps {
   estimation: AIEstimation | null;
-  uploadedImage?: string; // This should be the data URI of the image
+  uploadedImage?: string; 
 }
 
 export function NutritionalInfoDisplay({ estimation, uploadedImage }: NutritionalInfoDisplayProps) {
   const [selectedIngredientNutrition, setSelectedIngredientNutrition] = useState<IngredientNutritionInfo | null>(null);
   const [isLoadingNutrition, setIsLoadingNutrition] = useState(false);
   const [nutritionError, setNutritionError] = useState<string | null>(null);
-  const [isRecipeVisible, setIsRecipeVisible] = useState(false); // New state for recipe visibility
-  const { saveMeal, isLocalStorageReady } = useMealStorage();
+  const [isRecipeVisible, setIsRecipeVisible] = useState(false);
+  
+  const { user } = useAuth();
+  const { saveMeal, isLoading: isSavingMeal, error: saveMealError } = useMealStorage();
   const { toast } = useToast();
 
   if (!estimation) {
@@ -55,7 +58,15 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
   };
 
-  const handleSaveMeal = () => {
+  const handleSaveMeal = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save meals.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!uploadedImage || !estimation) {
       toast({
         title: "Cannot Save Meal",
@@ -64,20 +75,23 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
       });
       return;
     }
-    const mealToSave = {
+    
+    const mealDataToSave = {
       uploadedImagePreview: uploadedImage,
       aiEstimation: estimation,
     };
-    const success = saveMeal(mealToSave);
-    if (success) {
+
+    const newMealId = await saveMeal(mealDataToSave);
+
+    if (newMealId) {
       toast({
         title: "Meal Saved!",
-        description: "Your meal analysis has been saved to your browser.",
+        description: "Your meal analysis has been saved to your account.",
       });
     } else {
       toast({
         title: "Save Failed",
-        description: "Could not save the meal. Local storage might be full or disabled, or not ready yet.",
+        description: saveMealError || "Could not save the meal. Please try again.",
         variant: "destructive",
       });
     }
@@ -91,7 +105,6 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   } = estimation;
 
   const currentIdentifiedIngredients = identifiedIngredients || [];
-
   const currentGeneratedRecipe = generatedRecipe || {
     name: 'Recipe Details Unavailable',
     description: 'The AI could not generate a detailed recipe at this time.',
@@ -101,7 +114,6 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     ingredientsList: [],
     instructionsList: []
   };
-
   const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
   const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
 
@@ -112,9 +124,13 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           <span className="flex items-center gap-2">
             <Zap /> AI Analysis Results
           </span>
-          {uploadedImage && estimation && (
-            <Button onClick={handleSaveMeal} variant="outline" size="sm">
-              <Save className="mr-2 h-4 w-4" />
+          {user && uploadedImage && estimation && (
+            <Button onClick={handleSaveMeal} variant="outline" size="sm" disabled={isSavingMeal}>
+              {isSavingMeal ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               Save Meal
             </Button>
           )}
