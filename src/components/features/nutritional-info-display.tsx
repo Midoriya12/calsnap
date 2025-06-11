@@ -23,7 +23,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const [selectedIngredientNutrition, setSelectedIngredientNutrition] = useState<IngredientNutritionInfo | null>(null);
   const [isLoadingNutrition, setIsLoadingNutrition] = useState(false);
   const [nutritionError, setNutritionError] = useState<string | null>(null);
-  const { saveMeal, isLocalStorageReady } = useMealStorage();
+  const { saveMeal, isLocalStorageReady } = useMealStorage(); // isLocalStorageReady is still useful for other potential operations or explicit disabling
   const { toast } = useToast();
 
   if (!estimation) {
@@ -67,7 +67,8 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
       uploadedImagePreview: uploadedImage,
       aiEstimation: estimation,
     };
-    const success = saveMeal(mealToSave);
+    // The saveMeal function from the hook already checks isLocalStorageReady
+    const success = saveMeal(mealToSave); 
     if (success) {
       toast({
         title: "Meal Saved!",
@@ -76,7 +77,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     } else {
       toast({
         title: "Save Failed",
-        description: "Could not save the meal. Local storage might be full or disabled.",
+        description: "Could not save the meal. Local storage might be full or disabled, or not ready yet.",
         variant: "destructive",
       });
     }
@@ -111,7 +112,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           <span className="flex items-center gap-2">
             <Zap /> AI Analysis Results
           </span>
-          {isLocalStorageReady && uploadedImage && (
+          {/* 
+            Show button if uploadedImage and estimation are present.
+            The saveMeal function handles isLocalStorageReady internally.
+          */}
+          {uploadedImage && estimation && (
             <Button onClick={handleSaveMeal} variant="outline" size="sm">
               <Save className="mr-2 h-4 w-4" />
               Save Meal
@@ -168,7 +173,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <ClipboardList className="text-accent" /> Nutritional Dashboard (Per Ingredient - USDA Data)
           </h3>
           {isLoadingNutrition && (
-             <Card className="mt-2 bg-muted/50 p-4 animate-pulse">
+             <Card className="mt-2 bg-muted/50 p-4">
                 <Skeleton className="h-5 w-1/2 mb-3" />
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-3/4" />
