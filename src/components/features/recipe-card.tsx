@@ -6,21 +6,20 @@ import type { Recipe } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Utensils, Clock, Users, Flame, Eye } from 'lucide-react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { Utensils, Clock, Users, Flame, Eye, Bookmark } from 'lucide-react'; // Added Bookmark
+import { useRouter } from 'next/navigation';
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
-  const router = useRouter(); // Initialize router
+  const router = useRouter(); 
 
   const handleRecipeClick = () => {
-    router.push(`/recipes/${recipe.id}`); // Navigate to recipe details page
+    router.push(`/recipes/${recipe.id}`); 
   };
 
-  // Generate a more specific AI hint from the recipe name
   const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
@@ -34,7 +33,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               layout="fill" 
               objectFit="cover" 
               className="rounded-t-lg"
-              data-ai-hint={aiHint} // Use more specific hint
+              data-ai-hint={aiHint} 
             />
           </div>
         </CardHeader>
@@ -64,10 +63,21 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
                 <span>{recipe.calories} kcal per serving</span>
               </div>
             )}
+            {typeof recipe.viewCount === 'number' && (
+              <div className="flex items-center gap-1">
+                <Eye size={14} className="text-muted-foreground" />
+                <span>{recipe.viewCount.toLocaleString()} views</span>
+              </div>
+            )}
+            {typeof recipe.saveCount === 'number' && (
+              <div className="flex items-center gap-1">
+                <Bookmark size={14} className="text-muted-foreground" />
+                <span>{recipe.saveCount.toLocaleString()} saves</span>
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          {/* Button also navigates; stopPropagation prevents double navigation if card also has onClick */}
           <Button variant="outline" size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); handleRecipeClick(); }}>
             <Eye className="mr-2 h-4 w-4" />
             View Full Recipe

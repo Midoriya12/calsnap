@@ -11,6 +11,8 @@ export interface Recipe {
   description: string;
   preparationTime: string;
   servings: number;
+  viewCount?: number;
+  saveCount?: number;
 }
 
 export interface DetailedRecipe {

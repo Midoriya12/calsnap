@@ -21,6 +21,8 @@ export const mockRecipes: Recipe[] = [
     description: 'A creamy and delicious classic Italian pasta dish, rich in flavor and tradition.',
     preparationTime: '30 minutes',
     servings: 2,
+    viewCount: 1250,
+    saveCount: 320,
   },
   {
     id: '2',
@@ -41,6 +43,8 @@ export const mockRecipes: Recipe[] = [
     description: 'A hearty and nutritious vegan soup perfect for a cold day, packed with vegetables and spices.',
     preparationTime: '45 minutes',
     servings: 4,
+    viewCount: 890,
+    saveCount: 150,
   },
   {
     id: '3',
@@ -62,6 +66,8 @@ export const mockRecipes: Recipe[] = [
     description: 'A quick and flavorful chicken stir-fry with a sweet and savory teriyaki sauce and crisp vegetables.',
     preparationTime: '25 minutes',
     servings: 3,
+    viewCount: 2100,
+    saveCount: 550,
   },
   {
     id: '4',
@@ -82,6 +88,8 @@ export const mockRecipes: Recipe[] = [
     description: 'A light and refreshing quinoa salad packed with colorful roasted vegetables and a zesty lemon dressing.',
     preparationTime: '50 minutes',
     servings: 4,
+    viewCount: 750,
+    saveCount: 210,
   },
   {
     id: '5',
@@ -101,6 +109,8 @@ export const mockRecipes: Recipe[] = [
     description: 'Flavorful beef tacos with fresh homemade salsa, perfect for a fun and easy weeknight meal.',
     preparationTime: '35 minutes',
     servings: 4,
+    viewCount: 1800,
+    saveCount: 480,
   },
   {
     id: '6',
@@ -121,6 +131,8 @@ export const mockRecipes: Recipe[] = [
     description: 'Aromatic and spicy Thai green curry with crispy tofu and a medley of vegetables, served over jasmine rice.',
     preparationTime: '40 minutes',
     servings: 4,
+    viewCount: 1150,
+    saveCount: 290,
   },
   {
     id: '7',
@@ -142,6 +154,8 @@ export const mockRecipes: Recipe[] = [
     description: 'Creamy and decadent mushroom risotto made with Arborio rice and a mix of fresh mushrooms.',
     preparationTime: '1 hour',
     servings: 3,
+    viewCount: 980,
+    saveCount: 250,
   },
   {
     id: '8',
@@ -164,5 +178,7 @@ export const mockRecipes: Recipe[] = [
     description: 'A rich and creamy Indian butter chicken curry, mildly spiced and full of flavor. Best served with naan or rice.',
     preparationTime: '50 minutes',
     servings: 4,
+    viewCount: 3200,
+    saveCount: 850,
   }
 ];

@@ -7,12 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle, Eye, Bookmark } from 'lucide-react'; // Added Eye, Bookmark
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 async function getRecipe(id: string): Promise<Recipe | null> {
-  // In a real app, you'd fetch this from your API or database
-  // await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
   const recipe = mockRecipes.find(recipe => recipe.id === id);
   return recipe || null;
 }
@@ -39,7 +37,6 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
     );
   }
 
-  // Generate a more specific AI hint from the recipe name
   const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
@@ -64,7 +61,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
                 layout="fill"
                 objectFit="cover"
                 className="rounded-t-lg"
-                data-ai-hint={aiHint} // Use more specific hint
+                data-ai-hint={aiHint} 
               />
             </div>
           </CardHeader>
@@ -74,7 +71,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
 
             <Separator />
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
               <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
                 <Clock size={20} className="text-accent mb-1" />
                 <span className="font-semibold">Prep Time</span>
@@ -95,6 +92,20 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
                   <Flame size={20} className="text-accent mb-1" />
                   <span className="font-semibold">Calories</span>
                   <span>{recipe.calories} kcal</span>
+                </div>
+              )}
+               {typeof recipe.viewCount === 'number' && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+                  <Eye size={20} className="text-accent mb-1" />
+                  <span className="font-semibold">Views</span>
+                  <span>{recipe.viewCount.toLocaleString()}</span>
+                </div>
+              )}
+              {typeof recipe.saveCount === 'number' && (
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+                  <Bookmark size={20} className="text-accent mb-1" />
+                  <span className="font-semibold">Saves</span>
+                  <span>{recipe.saveCount.toLocaleString()}</span>
                 </div>
               )}
             </div>
@@ -152,7 +163,6 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
   );
 }
 
-// Optional: Add metadata for SEO
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const recipe = await getRecipe(params.id);
   if (!recipe) {
