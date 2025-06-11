@@ -29,11 +29,12 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const handleIngredientClick = async (ingredientName: string) => {
     setIsLoadingNutrition(true);
     setNutritionError(null);
-    setSelectedIngredientNutrition(null);
+    setSelectedIngredientNutrition(null); // Reset previous data
     try {
       const response = await fetch(`/api/nutrition?ingredientName=${encodeURIComponent(ingredientName)}`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch nutritional data. Status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: `Failed to fetch nutritional data. Status: ${response.status}` }));
+        throw new Error(errorData.message || `Failed to fetch nutritional data. Status: ${response.status}`);
       }
       const data: IngredientNutritionInfo = await response.json();
       setSelectedIngredientNutrition(data);
@@ -82,10 +83,12 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <div className="flex flex-wrap gap-2">
               {estimation.ingredients.map((ingredient, index) => (
                 <Badge
-                  key={index}
+                  key={`${ingredient}-${index}`} // Using index with ingredient name for more stable key
                   variant="outline"
-                  className="text-sm cursor-pointer hover:bg-accent/10"
+                  className="text-sm cursor-pointer hover:bg-accent/10 active:bg-accent/20"
                   onClick={() => handleIngredientClick(ingredient)}
+                  tabIndex={0} // Make it focusable
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleIngredientClick(ingredient);}} // Keyboard accessibility
                 >
                   {ingredient}
                 </Badge>
@@ -103,20 +106,25 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <ClipboardList className="text-accent" /> Nutritional Dashboard (Per Ingredient)
           </h3>
           {isLoadingNutrition && (
-            <div className="space-y-2 mt-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
+             <Card className="mt-2 bg-muted/50 p-4 animate-pulse">
+                <Skeleton className="h-5 w-1/2 mb-3" /> {/* For Title */}
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-3/4" /> 
+                  <Skeleton className="h-4 w-full" /> 
+                  <Skeleton className="h-4 w-2/3" /> 
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-3 w-1/3 mt-1" /> {/* For source */}
+                </div>
+              </Card>
           )}
-          {nutritionError && !isLoadingNutrition &&(
+          {!isLoadingNutrition && nutritionError && (
             <Alert variant="destructive" className="mt-2">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>Error Fetching Details</AlertTitle>
               <AlertDescription>{nutritionError}</AlertDescription>
             </Alert>
           )}
-          {!isLoadingNutrition && selectedIngredientNutrition && (
+          {!isLoadingNutrition && !nutritionError && selectedIngredientNutrition && (
             <Card className="mt-2 bg-muted/50 p-4">
               <CardTitle className="text-md mb-2">Details for: <span className="font-bold text-primary">{selectedIngredientNutrition.ingredient}</span></CardTitle>
               <ul className="text-sm space-y-1">
@@ -128,7 +136,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
               </ul>
             </Card>
           )}
-          {!isLoadingNutrition && !selectedIngredientNutrition && !nutritionError && (
+          {!isLoadingNutrition && !nutritionError && !selectedIngredientNutrition && (
             <p className="text-sm text-muted-foreground mt-2">
               Select an ingredient above to view its (mock) nutritional details here. Full USDA integration coming soon!
             </p>
