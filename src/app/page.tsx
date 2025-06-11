@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,6 +9,7 @@ import { RecipeCatalog } from '@/components/features/recipe-catalog';
 import { AdPlaceholder } from '@/components/ad-placeholder';
 import type { AIEstimation } from '@/types';
 import { Separator } from '@/components/ui/separator';
+import { ImageIcon, Sparkles } from 'lucide-react';
 
 export default function CalSnapPage() {
   const [aiEstimation, setAiEstimation] = useState<AIEstimation | null>(null);
@@ -34,8 +36,13 @@ export default function CalSnapPage() {
               </div>
             )}
              {!aiEstimation && (
-                <div className="lg:col-span-2 flex items-center justify-center h-full bg-card rounded-lg p-8">
-                    <p className="text-muted-foreground text-center">Upload an image of your meal to see its nutritional analysis here.</p>
+                <div className="lg:col-span-2 flex flex-col items-center justify-center h-full bg-card rounded-lg p-8 shadow-md">
+                    <Sparkles className="h-16 w-16 text-primary mb-4" />
+                    <h2 className="text-xl font-semibold text-foreground mb-2">Ready to Analyze Your Meal?</h2>
+                    <p className="text-muted-foreground text-center">
+                        Upload a photo of your food, and our AI will estimate its calories,
+                        identify ingredients, and even suggest a recipe idea!
+                    </p>
                 </div>
             )}
           </div>

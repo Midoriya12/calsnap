@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree, Utensils, Lightbulb } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap } from 'lucide-react';
 
 interface NutritionalInfoDisplayProps {
   estimation: AIEstimation | null;
@@ -22,7 +22,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     <Card className="w-full shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl font-headline text-primary">
-          <ListTree /> Meal Analysis Results
+          <Zap /> AI Analysis Results
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -69,9 +69,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
 
         <div>
-          <h3 className="text-lg font-semibold mb-2">Nutritional Dashboard</h3>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+            <ClipboardList className="text-accent" /> Nutritional Dashboard
+          </h3>
           <p className="text-sm text-muted-foreground">
-            More detailed nutritional information (macros, micros) from USDA FoodData Central API coming soon!
+            Enhanced nutritional breakdown (macros, micros) powered by USDA FoodData Central API is on its way!
           </p>
         </div>
 

@@ -90,6 +90,10 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
     }
   };
 
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
@@ -101,18 +105,26 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="meal-image" className="block text-sm font-medium text-foreground">
-              Upload Meal Photo
-            </label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={triggerFileInput}
+              disabled={isLoading}
+            >
+              <UploadCloud className="mr-2 h-4 w-4" />
+              {file ? "Change Meal Photo" : "Upload Meal Photo"}
+            </Button>
             <Input
               id="meal-image"
               type="file"
               accept="image/*"
               onChange={handleFileChange}
               ref={fileInputRef}
-              className="file:text-primary file:font-semibold"
+              className="sr-only" 
               disabled={isLoading}
             />
+             {file && <p className="text-sm text-muted-foreground text-center pt-1">Selected: {file.name}</p>}
           </div>
 
           {imagePreview && (
