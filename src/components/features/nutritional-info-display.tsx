@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle, Clock, Users, ChefHat, BookOpen, ListChecks, Save } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle, Clock, Users, ChefHat, BookOpen, ListChecks, Save, ClipboardCopy } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -117,6 +117,20 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
   const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
 
+  const handleCopyIngredients = () => {
+    if (currentGeneratedRecipe && currentRecipeIngredientsList.length > 0) {
+      const ingredientsText = currentRecipeIngredientsList.join('\n');
+      navigator.clipboard.writeText(ingredientsText)
+        .then(() => {
+          toast({ title: "Copied!", description: "Shopping list copied to clipboard." });
+        })
+        .catch(err => {
+          console.error('Failed to copy ingredients: ', err);
+          toast({ title: "Copy Failed", description: "Could not copy shopping list.", variant: "destructive" });
+        });
+    }
+  };
+
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
@@ -225,17 +239,17 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
 
         <div>
-          <h3 className="text-2xl font-semibold flex items-center gap-2 text-primary mb-3">
-            <BookOpen /> AI Generated Recipe
-          </h3>
-          {!isRecipeVisible && (
-            <div className="mb-4">
-              <Button onClick={() => setIsRecipeVisible(true)} variant="outline" size="sm">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Show Full Recipe
-              </Button>
-            </div>
-          )}
+           <div className="flex flex-col items-start gap-3 mb-3">
+              <h3 className="text-2xl font-semibold flex items-center gap-2 text-primary">
+                <BookOpen /> AI Generated Recipe
+              </h3>
+              {!isRecipeVisible && (
+                <Button onClick={() => setIsRecipeVisible(true)} variant="outline" size="sm">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Show Full Recipe
+                </Button>
+              )}
+          </div>
 
           {isRecipeVisible && (
             <>
@@ -297,20 +311,41 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         </div>
 
       </CardContent>
-      <CardFooter className="flex-col items-start space-y-3 pt-4">
-          <h3 className="text-md font-semibold mb-1">One-Click Ingredient Ordering</h3>
-          <p className="text-xs text-muted-foreground mb-2">
-            Order ingredients for this meal (or similar) from your favorite services. (Feature coming soon)
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" disabled>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Order from Zepto
-            </Button>
-            <Button variant="outline" size="sm" disabled>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Order from Blinkit
-            </Button>
-          </div>
-      </CardFooter>
+      {isRecipeVisible && currentGeneratedRecipe && currentRecipeIngredientsList.length > 0 && (
+        <CardFooter className="flex-col items-start space-y-4 pt-4 border-t mt-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
+              <ShoppingCart /> Get Ingredients for "{currentGeneratedRecipe.name}"
+            </h3>
+            
+            <div className="w-full space-y-2">
+              <h4 className="text-md font-medium">Shopping List:</h4>
+              <ul className="list-disc list-inside space-y-1 pl-4 text-sm text-foreground/90 bg-muted/50 p-3 rounded-md">
+                {currentRecipeIngredientsList.map((ingredient, index) => (
+                  <li key={`shopping-list-${index}`}>{ingredient}</li>
+                ))}
+              </ul>
+              <Button onClick={handleCopyIngredients} variant="outline" size="sm" className="w-full sm:w-auto">
+                <ClipboardCopy className="mr-2 h-4 w-4" /> Copy Shopping List
+              </Button>
+            </div>
+          
+            <div className="w-full space-y-2 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Order these ingredients from your favorite services (feature coming soon):
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="outline" size="sm" disabled>
+                  <ShoppingCart className="mr-2 h-4 w-4" /> Order from Zepto
+                </Button>
+                <Button variant="outline" size="sm" disabled>
+                  <ShoppingCart className="mr-2 h-4 w-4" /> Order from Blinkit
+                </Button>
+              </div>
+            </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
+
+    
