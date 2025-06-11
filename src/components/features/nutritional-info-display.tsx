@@ -1,12 +1,16 @@
 
 'use client';
 
-import type { AIEstimation } from '@/types';
+import type { AIEstimation, IngredientNutritionInfo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface NutritionalInfoDisplayProps {
   estimation: AIEstimation | null;
@@ -14,9 +18,36 @@ interface NutritionalInfoDisplayProps {
 }
 
 export function NutritionalInfoDisplay({ estimation, uploadedImage }: NutritionalInfoDisplayProps) {
+  const [selectedIngredientNutrition, setSelectedIngredientNutrition] = useState<IngredientNutritionInfo | null>(null);
+  const [isLoadingNutrition, setIsLoadingNutrition] = useState(false);
+  const [nutritionError, setNutritionError] = useState<string | null>(null);
+
   if (!estimation) {
     return null;
   }
+
+  const handleIngredientClick = async (ingredientName: string) => {
+    setIsLoadingNutrition(true);
+    setNutritionError(null);
+    setSelectedIngredientNutrition(null);
+    try {
+      const response = await fetch(`/api/nutrition?ingredientName=${encodeURIComponent(ingredientName)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch nutritional data. Status: ${response.status}`);
+      }
+      const data: IngredientNutritionInfo = await response.json();
+      setSelectedIngredientNutrition(data);
+    } catch (error) {
+      console.error("Error fetching ingredient nutrition:", error);
+      if (error instanceof Error) {
+        setNutritionError(error.message);
+      } else {
+        setNutritionError("An unknown error occurred while fetching nutritional data.");
+      }
+    } finally {
+      setIsLoadingNutrition(false);
+    }
+  };
 
   return (
     <Card className="w-full shadow-lg">
@@ -38,7 +69,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories</h3>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories (Whole Meal)</h3>
           <Badge variant="secondary" className="text-lg px-3 py-1 bg-accent/20 text-accent-foreground">
             {estimation.estimatedCalories} kcal
           </Badge>
@@ -46,10 +77,16 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients</h3>
+          <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see mock nutritional details.</p>
           {estimation.ingredients.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {estimation.ingredients.map((ingredient, index) => (
-                <Badge key={index} variant="outline" className="text-sm">
+                <Badge
+                  key={index}
+                  variant="outline"
+                  className="text-sm cursor-pointer hover:bg-accent/10"
+                  onClick={() => handleIngredientClick(ingredient)}
+                >
                   {ingredient}
                 </Badge>
               ))}
@@ -58,22 +95,52 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <p className="text-muted-foreground">No specific ingredients readily identifiable.</p>
           )}
         </div>
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Lightbulb className="text-accent" /> AI Recipe Idea</h3>
-          <p className="text-sm text-foreground/90 whitespace-pre-line">
-            {estimation.recipeIdea || "No specific recipe idea generated for this image."}
-          </p>
-        </div>
         
         <Separator />
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <ClipboardList className="text-accent" /> Nutritional Dashboard
+            <ClipboardList className="text-accent" /> Nutritional Dashboard (Per Ingredient)
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Enhanced nutritional breakdown (macros, micros) powered by USDA FoodData Central API is on its way!
+          {isLoadingNutrition && (
+            <div className="space-y-2 mt-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          )}
+          {nutritionError && !isLoadingNutrition &&(
+            <Alert variant="destructive" className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{nutritionError}</AlertDescription>
+            </Alert>
+          )}
+          {!isLoadingNutrition && selectedIngredientNutrition && (
+            <Card className="mt-2 bg-muted/50 p-4">
+              <CardTitle className="text-md mb-2">Details for: <span className="font-bold text-primary">{selectedIngredientNutrition.ingredient}</span></CardTitle>
+              <ul className="text-sm space-y-1">
+                <li><strong>Calories:</strong> {selectedIngredientNutrition.calories} kcal</li>
+                <li><strong>Protein:</strong> {selectedIngredientNutrition.protein}</li>
+                <li><strong>Fat:</strong> {selectedIngredientNutrition.fat}</li>
+                <li><strong>Carbs:</strong> {selectedIngredientNutrition.carbs}</li>
+                <li className="text-xs text-muted-foreground pt-1"><em>Source: {selectedIngredientNutrition.source}</em></li>
+              </ul>
+            </Card>
+          )}
+          {!isLoadingNutrition && !selectedIngredientNutrition && !nutritionError && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Select an ingredient above to view its (mock) nutritional details here. Full USDA integration coming soon!
+            </p>
+          )}
+        </div>
+
+        <Separator />
+        
+        <div>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Lightbulb className="text-accent" /> AI Recipe Idea</h3>
+          <p className="text-sm text-foreground/90 whitespace-pre-line">
+            {estimation.recipeIdea || "No specific recipe idea generated for this image."}
           </p>
         </div>
 

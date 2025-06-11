@@ -18,3 +18,12 @@ export interface AIEstimation {
   ingredients: string[];
   recipeIdea: string;
 }
+
+export interface IngredientNutritionInfo {
+  ingredient: string;
+  calories: number;
+  protein: string;
+  fat: string;
+  carbs: string;
+  source: string;
+}
