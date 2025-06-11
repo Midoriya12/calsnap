@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMealStorage } from '@/hooks/use-meal-storage';
 import { SavedMealCard } from '@/components/features/saved-meal-card';
 import { Button } from '@/components/ui/button';
@@ -10,22 +11,50 @@ import { AppHeader } from '@/components/layout/header';
 import { AlertCircle, Archive, ChevronLeft, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function SavedMealsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const { savedMeals, deleteMeal, isLocalStorageReady } = useMealStorage();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (isLocalStorageReady) {
-      setIsLoading(false);
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login?redirect=/saved-meals'); // Redirect to login if not authenticated
+      } else {
+        // User is authenticated, proceed to load meal data
+        if (isLocalStorageReady) {
+          setIsLoadingData(false);
+        }
+      }
     }
-  }, [isLocalStorageReady]);
+  }, [user, authLoading, router, isLocalStorageReady]);
+
+  // Secondary effect to handle isLocalStorageReady changing after auth is confirmed
+  useEffect(() => {
+    if (user && isLocalStorageReady) {
+        setIsLoadingData(false);
+    }
+  }, [user, isLocalStorageReady]);
+
 
   const handleDeleteMeal = (mealId: string) => {
     deleteMeal(mealId);
     // Optionally add a toast notification here
   };
 
+  if (authLoading || (!user && !authLoading)) {
+    // Show loading spinner while auth state is being determined, or if redirecting
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // At this point, user is authenticated
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
@@ -44,14 +73,14 @@ export default function SavedMealsPage() {
 
         <Separator className="mb-8" />
 
-        {isLoading && (
+        {isLoadingData && (
           <div className="flex flex-col items-center justify-center text-center py-10">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">Loading your saved meals...</p>
           </div>
         )}
 
-        {!isLoading && savedMeals.length === 0 && (
+        {!isLoadingData && savedMeals.length === 0 && (
           <div className="text-center py-10">
             <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">No Saved Meals Yet</h2>
@@ -66,7 +95,7 @@ export default function SavedMealsPage() {
           </div>
         )}
 
-        {!isLoading && savedMeals.length > 0 && (
+        {!isLoadingData && savedMeals.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {savedMeals.map((meal) => (
               <SavedMealCard
