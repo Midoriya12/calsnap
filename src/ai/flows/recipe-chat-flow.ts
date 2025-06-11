@@ -122,7 +122,7 @@ const recipeChatFlow = ai.defineFlow(
   },
   async (input) => {
     const llmResponse = await recipeChatPrompt(input); // Pass userQuery and potentially history
-    const output = llmResponse.output();
+    const output = llmResponse.output; // Corrected: access as a property
     if (!output?.botResponse) {
       // Fallback response if LLM somehow doesn't generate one
       return { botResponse: "I'm sorry, I couldn't process that request. Could you try asking in a different way?" };
