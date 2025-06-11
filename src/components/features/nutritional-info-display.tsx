@@ -23,7 +23,8 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const [selectedIngredientNutrition, setSelectedIngredientNutrition] = useState<IngredientNutritionInfo | null>(null);
   const [isLoadingNutrition, setIsLoadingNutrition] = useState(false);
   const [nutritionError, setNutritionError] = useState<string | null>(null);
-  const { saveMeal, isLocalStorageReady } = useMealStorage(); // isLocalStorageReady is still useful for other potential operations or explicit disabling
+  const [isRecipeVisible, setIsRecipeVisible] = useState(false); // New state for recipe visibility
+  const { saveMeal, isLocalStorageReady } = useMealStorage();
   const { toast } = useToast();
 
   if (!estimation) {
@@ -67,8 +68,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
       uploadedImagePreview: uploadedImage,
       aiEstimation: estimation,
     };
-    // The saveMeal function from the hook already checks isLocalStorageReady
-    const success = saveMeal(mealToSave); 
+    const success = saveMeal(mealToSave);
     if (success) {
       toast({
         title: "Meal Saved!",
@@ -112,10 +112,6 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           <span className="flex items-center gap-2">
             <Zap /> AI Analysis Results
           </span>
-          {/* 
-            Show button if uploadedImage and estimation are present.
-            The saveMeal function handles isLocalStorageReady internally.
-          */}
           {uploadedImage && estimation && (
             <Button onClick={handleSaveMeal} variant="outline" size="sm">
               <Save className="mr-2 h-4 w-4" />
@@ -213,57 +209,75 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
 
         <div>
-          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-primary"><BookOpen /> AI Generated Recipe: {currentGeneratedRecipe.name}</h3>
-
-          <p className="text-md text-muted-foreground mb-4">{currentGeneratedRecipe.description}</p>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-6">
-            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
-              <Clock size={20} className="text-accent mb-1" />
-              <span className="font-semibold">Prep Time</span>
-              <span>{currentGeneratedRecipe.preparationTime}</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
-              <ChefHat size={20} className="text-accent mb-1" />
-              <span className="font-semibold">Cook Time</span>
-              <span>{currentGeneratedRecipe.cookingTime}</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
-              <Users size={20} className="text-accent mb-1" />
-              <span className="font-semibold">Servings</span>
-              <span>{currentGeneratedRecipe.servings}</span>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
-              <ListChecks /> Recipe Ingredients
-            </h4>
-            {currentRecipeIngredientsList.length > 0 ? (
-              <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
-                {currentRecipeIngredientsList.map((ingredient, index) => (
-                  <li key={`recipe-ing-${index}`}>{ingredient}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">No ingredients listed for this recipe by the AI.</p>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-primary">
+              <BookOpen /> AI Generated Recipe
+            </h3>
+            {!isRecipeVisible && (
+              <Button onClick={() => setIsRecipeVisible(true)} variant="outline" size="sm">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Show Full Recipe
+              </Button>
             )}
           </div>
 
-          <div>
-            <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
-              <ListChecks /> Recipe Instructions
-            </h4>
-            {currentRecipeInstructionsList.length > 0 ? (
-              <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
-                {currentRecipeInstructionsList.map((step, index) => (
-                  <li key={`recipe-instr-${index}`}>{step}</li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-sm text-muted-foreground">No instructions provided for this recipe by the AI.</p>
-            )}
-          </div>
+          {isRecipeVisible && (
+            <>
+              <h4 className="text-xl font-semibold mb-2 text-primary-darker">{currentGeneratedRecipe.name}</h4>
+              <p className="text-md text-muted-foreground mb-4">{currentGeneratedRecipe.description}</p>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-6">
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+                  <Clock size={20} className="text-accent mb-1" />
+                  <span className="font-semibold">Prep Time</span>
+                  <span>{currentGeneratedRecipe.preparationTime}</span>
+                </div>
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+                  <ChefHat size={20} className="text-accent mb-1" />
+                  <span className="font-semibold">Cook Time</span>
+                  <span>{currentGeneratedRecipe.cookingTime}</span>
+                </div>
+                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+                  <Users size={20} className="text-accent mb-1" />
+                  <span className="font-semibold">Servings</span>
+                  <span>{currentGeneratedRecipe.servings}</span>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
+                  <ListChecks /> Recipe Ingredients
+                </h4>
+                {currentRecipeIngredientsList.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
+                    {currentRecipeIngredientsList.map((ingredient, index) => (
+                      <li key={`recipe-ing-${index}`}>{ingredient}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ingredients listed for this recipe by the AI.</p>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
+                  <ListChecks /> Recipe Instructions
+                </h4>
+                {currentRecipeInstructionsList.length > 0 ? (
+                  <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
+                    {currentRecipeInstructionsList.map((step, index) => (
+                      <li key={`recipe-instr-${index}`}>{step}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No instructions provided for this recipe by the AI.</p>
+                )}
+              </div>
+               <Button onClick={() => setIsRecipeVisible(false)} variant="outline" size="sm" className="mt-6">
+                Hide Full Recipe
+              </Button>
+            </>
+          )}
         </div>
 
       </CardContent>
