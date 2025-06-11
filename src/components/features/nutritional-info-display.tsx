@@ -1,26 +1,30 @@
 
 'use client';
 
-import type { AIEstimation, IngredientNutritionInfo } from '@/types';
+import type { AIEstimation, IngredientNutritionInfo, SavedMeal } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle, Clock, Users, ChefHat, BookOpen, ListChecks } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle, Clock, Users, ChefHat, BookOpen, ListChecks, Save } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMealStorage } from '@/hooks/use-meal-storage';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface NutritionalInfoDisplayProps {
   estimation: AIEstimation | null;
-  uploadedImage?: string;
+  uploadedImage?: string; // This should be the data URI of the image
 }
 
 export function NutritionalInfoDisplay({ estimation, uploadedImage }: NutritionalInfoDisplayProps) {
   const [selectedIngredientNutrition, setSelectedIngredientNutrition] = useState<IngredientNutritionInfo | null>(null);
   const [isLoadingNutrition, setIsLoadingNutrition] = useState(false);
   const [nutritionError, setNutritionError] = useState<string | null>(null);
+  const { saveMeal, isLocalStorageReady } = useMealStorage();
+  const { toast } = useToast();
 
   if (!estimation) {
     return null;
@@ -29,7 +33,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const handleIngredientClick = async (ingredientName: string) => {
     setIsLoadingNutrition(true);
     setNutritionError(null);
-    setSelectedIngredientNutrition(null); 
+    setSelectedIngredientNutrition(null);
     try {
       const response = await fetch(`/api/nutrition?ingredientName=${encodeURIComponent(ingredientName)}`);
       if (!response.ok) {
@@ -50,34 +54,69 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
   };
 
-  const { 
-    dishName, 
-    estimatedCalories, 
-    identifiedIngredients, 
-    generatedRecipe 
+  const handleSaveMeal = () => {
+    if (!uploadedImage || !estimation) {
+      toast({
+        title: "Cannot Save Meal",
+        description: "Missing image or analysis data to save.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const mealToSave = {
+      uploadedImagePreview: uploadedImage,
+      aiEstimation: estimation,
+    };
+    const success = saveMeal(mealToSave);
+    if (success) {
+      toast({
+        title: "Meal Saved!",
+        description: "Your meal analysis has been saved to your browser.",
+      });
+    } else {
+      toast({
+        title: "Save Failed",
+        description: "Could not save the meal. Local storage might be full or disabled.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const {
+    dishName,
+    estimatedCalories,
+    identifiedIngredients,
+    generatedRecipe
   } = estimation;
 
-  // Default to empty arrays if properties are undefined
   const currentIdentifiedIngredients = identifiedIngredients || [];
-  
-  const currentGeneratedRecipe = generatedRecipe || { 
-    name: 'Recipe Details Unavailable', 
-    description: 'The AI could not generate a detailed recipe at this time.', 
-    preparationTime: 'N/A', 
-    cookingTime: 'N/A', 
-    servings: 'N/A', 
-    ingredientsList: [], 
-    instructionsList: [] 
+
+  const currentGeneratedRecipe = generatedRecipe || {
+    name: 'Recipe Details Unavailable',
+    description: 'The AI could not generate a detailed recipe at this time.',
+    preparationTime: 'N/A',
+    cookingTime: 'N/A',
+    servings: 'N/A',
+    ingredientsList: [],
+    instructionsList: []
   };
-  
+
   const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
   const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
 
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl font-headline text-primary">
-          <Zap /> AI Analysis Results
+        <CardTitle className="flex items-center justify-between text-xl font-headline text-primary">
+          <span className="flex items-center gap-2">
+            <Zap /> AI Analysis Results
+          </span>
+          {isLocalStorageReady && uploadedImage && (
+            <Button onClick={handleSaveMeal} variant="outline" size="sm">
+              <Save className="mr-2 h-4 w-4" />
+              Save Meal
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -101,17 +140,17 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients (Identified in Photo)</h3>
-          <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see nutritional details from USDA.</p>
+          <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see nutritional details from USDA (per 100g).</p>
           {currentIdentifiedIngredients.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {currentIdentifiedIngredients.map((ingredient, index) => (
                 <Badge
-                  key={`${ingredient}-${index}`} 
+                  key={`${ingredient}-${index}`}
                   variant="outline"
                   className="text-sm cursor-pointer hover:bg-accent/10 active:bg-accent/20"
                   onClick={() => handleIngredientClick(ingredient)}
-                  tabIndex={0} 
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleIngredientClick(ingredient);}} 
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleIngredientClick(ingredient);}}
                 >
                   {ingredient}
                 </Badge>
@@ -121,7 +160,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
             <p className="text-muted-foreground">No specific ingredients readily identifiable in the photo.</p>
           )}
         </div>
-        
+
         <Separator />
 
         <div>
@@ -130,11 +169,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           </h3>
           {isLoadingNutrition && (
              <Card className="mt-2 bg-muted/50 p-4 animate-pulse">
-                <Skeleton className="h-5 w-1/2 mb-3" /> 
+                <Skeleton className="h-5 w-1/2 mb-3" />
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-3/4" /> 
-                  <Skeleton className="h-4 w-full" /> 
-                  <Skeleton className="h-4 w-2/3" /> 
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
                   <Skeleton className="h-4 w-1/2" />
                   <Skeleton className="h-3 w-1/3 mt-1" />
                 </div>
@@ -167,10 +206,10 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         </div>
 
         <Separator />
-        
+
         <div>
           <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-primary"><BookOpen /> AI Generated Recipe: {currentGeneratedRecipe.name}</h3>
-          
+
           <p className="text-md text-muted-foreground mb-4">{currentGeneratedRecipe.description}</p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-6">
@@ -190,7 +229,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
               <span>{currentGeneratedRecipe.servings}</span>
             </div>
           </div>
-          
+
           <div className="mb-6">
             <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
               <ListChecks /> Recipe Ingredients
@@ -240,4 +279,3 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     </Card>
   );
 }
-

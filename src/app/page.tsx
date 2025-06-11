@@ -9,7 +9,7 @@ import { RecipeCatalog } from '@/components/features/recipe-catalog';
 import { AdPlaceholder } from '@/components/ad-placeholder';
 import type { AIEstimation } from '@/types';
 import { Separator } from '@/components/ui/separator';
-import { ImageIcon, Sparkles } from 'lucide-react';
+import { Sparkles, Utensils } from 'lucide-react';
 
 export default function CalSnapPage() {
   const [aiEstimation, setAiEstimation] = useState<AIEstimation | null>(null);
@@ -30,18 +30,21 @@ export default function CalSnapPage() {
               <ImageUploader onAnalysisComplete={handleAnalysisComplete} />
               <AdPlaceholder />
             </div>
-            {aiEstimation && (
+            {aiEstimation && uploadedImagePreview && (
               <div className="lg:col-span-2">
                 <NutritionalInfoDisplay estimation={aiEstimation} uploadedImage={uploadedImagePreview} />
               </div>
             )}
              {!aiEstimation && (
-                <div className="lg:col-span-2 flex flex-col items-center justify-center h-full bg-card rounded-lg p-8 shadow-md">
-                    <Sparkles className="h-16 w-16 text-primary mb-4" />
-                    <h2 className="text-xl font-semibold text-foreground mb-2">Ready to Analyze Your Meal?</h2>
+                <div className="lg:col-span-2 flex flex-col items-center justify-center h-full bg-card rounded-lg p-8 shadow-md border border-dashed">
+                    <Sparkles className="h-16 w-16 text-primary mb-6" />
+                    <h2 className="text-2xl font-semibold text-foreground mb-3">Welcome to CalSnap!</h2>
+                    <p className="text-muted-foreground text-center mb-1">
+                        Ready to discover the secrets of your meal?
+                    </p>
                     <p className="text-muted-foreground text-center">
-                        Upload a photo of your food, and our AI will estimate its calories,
-                        identify ingredients, and even suggest a recipe idea!
+                        Upload a photo, and our AI will estimate its calories,
+                        identify ingredients, and even suggest a detailed recipe.
                     </p>
                 </div>
             )}
@@ -51,6 +54,12 @@ export default function CalSnapPage() {
         <Separator className="my-12" />
 
         <section id="recipe-catalog" aria-labelledby="recipe-catalog-heading">
+           <div className="text-center mb-8">
+            <h2 id="recipe-catalog-heading" className="text-3xl font-bold text-primary flex items-center justify-center gap-3">
+              <Utensils className="h-8 w-8" /> Recipe Catalog
+            </h2>
+            <p className="text-muted-foreground mt-2">Explore delicious recipes or get inspired for your next meal.</p>
+          </div>
           <RecipeCatalog />
         </section>
 

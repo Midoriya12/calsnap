@@ -26,15 +26,22 @@ export interface DetailedRecipe {
 export interface AIEstimation {
   dishName: string;
   estimatedCalories: number;
-  identifiedIngredients: string[]; // Renamed from 'ingredients'
+  identifiedIngredients: string[];
   generatedRecipe: DetailedRecipe;
 }
 
 export interface IngredientNutritionInfo {
   ingredient: string;
-  calories: number; 
-  protein: string; 
-  fat: string;     
-  carbs: string;   
+  calories: number;
+  protein: string;
+  fat: string;
+  carbs: string;
   source: string;
+}
+
+export interface SavedMeal {
+  id: string; // Unique ID for the saved meal, can be a timestamp or UUID
+  uploadedImagePreview: string; // Data URI of the uploaded image
+  aiEstimation: AIEstimation;
+  savedAt: string; // ISO string for the timestamp
 }
