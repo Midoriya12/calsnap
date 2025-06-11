@@ -124,58 +124,60 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         </Button>
       </div>
 
-      <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
-        {displayedMessages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              'flex items-end gap-2',
-              msg.sender === 'user' ? 'justify-end' : 'justify-start'
-            )}
-          >
-            {msg.sender === 'bot' && (
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  <Bot size={18} />
-                </AvatarFallback>
-              </Avatar>
-            )}
+      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+        <div className="space-y-3"> {/* Added space-y-3 here for overall message spacing */}
+          {displayedMessages.map((msg) => (
             <div
+              key={msg.id}
               className={cn(
-                'max-w-[75%] rounded-lg px-3 py-2 text-sm shadow',
-                msg.sender === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
+                'flex items-end gap-2', 
+                msg.sender === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
-              {msg.text.split('\n').map((line, index) => (
-                <React.Fragment key={index}>
-                  {line}
-                  {index < msg.text.split('\n').length - 1 && <br />}
-                </React.Fragment>
-              ))}
+              {msg.sender === 'bot' && (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <Bot size={18} />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <div
+                className={cn(
+                  'max-w-[75%] rounded-lg px-3 py-2 text-sm shadow',
+                  msg.sender === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {msg.text.split('\n').map((line, index) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    {index < msg.text.split('\n').length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </div>
+               {msg.sender === 'user' && (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    <User size={18} />
+                  </AvatarFallback>
+                </Avatar>
+              )}
             </div>
-             {msg.sender === 'user' && (
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>
-                  <User size={18} />
-                </AvatarFallback>
-              </Avatar>
-            )}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex items-end gap-2 justify-start">
-             <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  <Bot size={18} />
-                </AvatarFallback>
-              </Avatar>
-            <div className="bg-muted text-muted-foreground rounded-lg px-3 py-2 text-sm shadow flex items-center">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" /> Typing...
+          ))}
+          {isLoading && (
+            <div className="flex items-end gap-2 justify-start">
+               <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <Bot size={18} />
+                  </AvatarFallback>
+                </Avatar>
+              <div className="bg-muted text-muted-foreground rounded-lg px-3 py-2 text-sm shadow flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Typing...
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </ScrollArea>
 
       <div className="p-3 border-t border-border">
@@ -210,4 +212,3 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     </div>
   );
 }
-
