@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type ChangeEvent, type FormEvent } from 'react';
@@ -6,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Loader2, Sparkles } from 'lucide-react';
-import { guessCaloriesFromImage, type GuessCaloriesFromImageOutput } from '@/ai/flows/guess-calories-from-image';
-import { detectIngredientsFromImage, type DetectIngredientsFromImageOutput } from '@/ai/flows/detect-ingredients-from-image';
+import { UploadCloud, Loader2, Sparkles, ChefHat } from 'lucide-react';
+import { guessCaloriesFromImage } from '@/ai/flows/guess-calories-from-image';
 import type { AIEstimation } from '@/types';
 
 
@@ -59,26 +59,23 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
 
     setIsLoading(true);
     try {
-      // Ensure imagePreview is a string and contains the base64 prefix
       if (typeof imagePreview !== 'string' || !imagePreview.startsWith('data:image')) {
         throw new Error('Invalid image data URI format.');
       }
       
-      const [caloriesResult, ingredientsResult] = await Promise.all([
-        guessCaloriesFromImage({ photoDataUri: imagePreview }),
-        detectIngredientsFromImage({ photoDataUri: imagePreview })
-      ]);
+      const analysisResult = await guessCaloriesFromImage({ photoDataUri: imagePreview });
 
       const estimation: AIEstimation = {
-        estimatedCalories: caloriesResult.estimatedCalories,
-        // If guessCaloriesFromImage also returns ingredients, prioritize that, else use detectIngredientsFromImage
-        ingredients: caloriesResult.ingredients && caloriesResult.ingredients.length > 0 ? caloriesResult.ingredients : ingredientsResult.ingredients,
+        dishName: analysisResult.dishName,
+        estimatedCalories: analysisResult.estimatedCalories,
+        ingredients: analysisResult.ingredients,
+        recipeIdea: analysisResult.recipeIdea,
       };
       
       onAnalysisComplete(estimation, imagePreview);
       toast({
         title: "Analysis Complete!",
-        description: "Calories and ingredients have been estimated.",
+        description: "Dish name, calories, ingredients, and a recipe idea have been generated.",
       });
 
     } catch (error) {
@@ -99,7 +96,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
         <CardTitle className="flex items-center gap-2 text-xl font-headline text-primary">
             <Sparkles /> AI Meal Analyzer
         </CardTitle>
-        <CardDescription>Upload a photo of your meal to get an estimate of its calories and ingredients.</CardDescription>
+        <CardDescription>Upload a photo of your meal to get an estimate of its calories, ingredients, and a recipe idea.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -128,9 +125,9 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <UploadCloud className="mr-2 h-4 w-4" />
+              <ChefHat className="mr-2 h-4 w-4" />
             )}
-            Analyze Meal
+            Analyze Meal & Get Recipe Idea
           </Button>
         </form>
       </CardContent>

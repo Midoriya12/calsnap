@@ -1,3 +1,4 @@
+
 export interface Recipe {
   id: string;
   name: string;
@@ -12,6 +13,8 @@ export interface Recipe {
 }
 
 export interface AIEstimation {
+  dishName: string;
   estimatedCalories: number;
   ingredients: string[];
+  recipeIdea: string;
 }

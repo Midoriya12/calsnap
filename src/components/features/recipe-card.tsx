@@ -19,7 +19,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const handleRecipeClick = () => {
     toast({
       title: `Viewing: ${recipe.name}`,
-      description: "Full recipe details coming soon!",
+      description: "Full recipe details page/modal is coming soon! This is a placeholder.",
     });
     // In a real app, you would navigate to a recipe details page or open a modal here.
     console.log("Clicked on recipe:", recipe.name, recipe.id);
@@ -71,7 +71,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         <CardFooter className="p-4 pt-0">
           <Button variant="outline" size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); handleRecipeClick(); }}>
             <Eye className="mr-2 h-4 w-4" />
-            View Recipe
+            View Recipe (Info)
           </Button>
         </CardFooter>
       </Card>

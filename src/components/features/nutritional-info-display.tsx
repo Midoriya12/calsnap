@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { AIEstimation } from '@/types';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb } from 'lucide-react';
 
 interface NutritionalInfoDisplayProps {
   estimation: AIEstimation | null;
@@ -21,7 +22,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     <Card className="w-full shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl font-headline text-primary">
-          <ListTree /> Meal Analysis
+          <ListTree /> Meal Analysis Results
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -32,6 +33,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         )}
 
         <div>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Utensils className="text-accent" /> Identified Dish</h3>
+          <p className="text-md font-medium text-foreground">{estimation.dishName || "N/A"}</p>
+        </div>
+
+        <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories</h3>
           <Badge variant="secondary" className="text-lg px-3 py-1 bg-accent/20 text-accent-foreground">
             {estimation.estimatedCalories} kcal
@@ -39,7 +45,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Detected Ingredients</h3>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients</h3>
           {estimation.ingredients.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {estimation.ingredients.map((ingredient, index) => (
@@ -49,8 +55,15 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No ingredients detected or identifiable.</p>
+            <p className="text-muted-foreground">No specific ingredients readily identifiable.</p>
           )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Lightbulb className="text-accent" /> AI Recipe Idea</h3>
+          <p className="text-sm text-foreground/90 whitespace-pre-line">
+            {estimation.recipeIdea || "No specific recipe idea generated for this image."}
+          </p>
         </div>
         
         <Separator />
