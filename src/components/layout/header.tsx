@@ -1,5 +1,7 @@
-import { Leaf } from 'lucide-react';
+
+import { Leaf, Archive } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export function AppHeader() {
   return (
@@ -11,8 +13,16 @@ export function AppHeader() {
             CalSnap
           </h1>
         </Link>
-        {/* Navigation links can be added here if needed */}
+        <nav>
+          <Button asChild variant="ghost">
+            <Link href="/saved-meals" className="flex items-center gap-2 text-foreground hover:text-primary">
+              <Archive className="h-5 w-5" />
+              Saved Meals
+            </Link>
+          </Button>
+        </nav>
       </div>
     </header>
   );
 }
+

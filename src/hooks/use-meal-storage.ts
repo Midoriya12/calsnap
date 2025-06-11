@@ -21,7 +21,6 @@ export function useMealStorage() {
         }
       } catch (error) {
         console.error("Error reading saved meals from localStorage:", error);
-        // Optionally clear corrupted data or handle error
         // localStorage.removeItem(MEALS_STORAGE_KEY);
       }
     }
@@ -32,10 +31,11 @@ export function useMealStorage() {
     try {
       const mealWithTimestamp: SavedMeal = {
         ...newMeal,
-        id: new Date().toISOString() + '-' + Math.random().toString(36).substring(2, 9), // Simple unique enough ID
+        id: new Date().toISOString() + '-' + Math.random().toString(36).substring(2, 9),
         savedAt: new Date().toISOString(),
       };
-      const updatedMeals = [...savedMeals, mealWithTimestamp];
+      // Prepend new meal to the list
+      const updatedMeals = [mealWithTimestamp, ...savedMeals];
       localStorage.setItem(MEALS_STORAGE_KEY, JSON.stringify(updatedMeals));
       setSavedMeals(updatedMeals);
       return true;
@@ -49,14 +49,15 @@ export function useMealStorage() {
     if (!isLocalStorageReady) return [];
     try {
       const storedMeals = localStorage.getItem(MEALS_STORAGE_KEY);
-      return storedMeals ? JSON.parse(storedMeals) : [];
+      const meals = storedMeals ? JSON.parse(storedMeals) : [];
+      // Ensure meals are sorted by savedAt descending (newest first)
+      return meals.sort((a: SavedMeal, b: SavedMeal) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
     } catch (error) {
       console.error("Error retrieving saved meals from localStorage:", error);
       return [];
     }
   }, [isLocalStorageReady]);
   
-  // Placeholder for delete functionality if needed later
   const deleteMeal = useCallback((mealId: string) => {
     if (!isLocalStorageReady) return false;
     try {
@@ -70,6 +71,20 @@ export function useMealStorage() {
     }
   }, [savedMeals, isLocalStorageReady]);
 
+  // Update savedMeals state when getSavedMeals is called and localStorage might have changed elsewhere
+  useEffect(() => {
+    if (isLocalStorageReady) {
+        const currentMealsFromStorage = getSavedMeals();
+        // Simple check to see if arrays are different based on length or first/last ID
+        // More sophisticated checks might be needed for complex scenarios
+        if (currentMealsFromStorage.length !== savedMeals.length || 
+            (currentMealsFromStorage.length > 0 && savedMeals.length > 0 && currentMealsFromStorage[0].id !== savedMeals[0].id)) {
+            setSavedMeals(currentMealsFromStorage);
+        }
+    }
+  }, [isLocalStorageReady, getSavedMeals]);
+
 
   return { saveMeal, getSavedMeals, savedMeals, deleteMeal, isLocalStorageReady };
 }
+
