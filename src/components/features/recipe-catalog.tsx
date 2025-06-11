@@ -72,27 +72,28 @@ export function RecipeCatalog() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
               disabled={isLoading || !!error}
+              suppressHydrationWarning={true}
             />
           </div>
-          <Select value={cuisineFilter} onValueChange={setCuisineFilter} disabled={isLoading || !!error}>
-            <SelectTrigger className="w-full md:w-[180px]">
+          <Select value={cuisineFilter} onValueChange={setCuisineFilter} disabled={isLoading || !!error} suppressHydrationWarning={true}>
+            <SelectTrigger className="w-full md:w-[180px]" suppressHydrationWarning={true}>
               <ListFilter className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Filter by cuisine" />
+              <SelectValue placeholder="Filter by cuisine" suppressHydrationWarning={true}/>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent suppressHydrationWarning={true}>
               {cuisines.map(cuisine => (
-                <SelectItem key={cuisine} value={cuisine}>{cuisine === 'all' ? 'All Cuisines' : cuisine}</SelectItem>
+                <SelectItem key={cuisine} value={cuisine} suppressHydrationWarning={true}>{cuisine === 'all' ? 'All Cuisines' : cuisine}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={dietaryFilter} onValueChange={setDietaryFilter} disabled={isLoading || !!error}>
-            <SelectTrigger className="w-full md:w-[180px]">
+          <Select value={dietaryFilter} onValueChange={setDietaryFilter} disabled={isLoading || !!error} suppressHydrationWarning={true}>
+            <SelectTrigger className="w-full md:w-[180px]" suppressHydrationWarning={true}>
               <ListFilter className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Filter by diet" />
+              <SelectValue placeholder="Filter by diet" suppressHydrationWarning={true}/>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent suppressHydrationWarning={true}>
               {dietaryOptions.map(option => (
-                <SelectItem key={option} value={option}>{option === 'all' ? 'All Dietary Needs' : option}</SelectItem>
+                <SelectItem key={option} value={option} suppressHydrationWarning={true}>{option === 'all' ? 'All Dietary Needs' : option}</SelectItem>
               ))}
             </SelectContent>
           </Select>

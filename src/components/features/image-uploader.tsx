@@ -111,6 +111,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
               className="w-full"
               onClick={triggerFileInput}
               disabled={isLoading}
+              suppressHydrationWarning={true}
             >
               <UploadCloud className="mr-2 h-4 w-4" />
               {file ? "Change Meal Photo" : "Upload Meal Photo"}
@@ -123,6 +124,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
               ref={fileInputRef}
               className="sr-only" 
               disabled={isLoading}
+              suppressHydrationWarning={true}
             />
              {file && <p className="text-sm text-muted-foreground text-center pt-1">Selected: {file.name}</p>}
           </div>
@@ -133,7 +135,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading || !file}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading || !file} suppressHydrationWarning={true}>
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
