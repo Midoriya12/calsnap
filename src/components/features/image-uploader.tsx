@@ -68,14 +68,14 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
       const estimation: AIEstimation = {
         dishName: analysisResult.dishName,
         estimatedCalories: analysisResult.estimatedCalories,
-        ingredients: analysisResult.ingredients,
-        recipeIdea: analysisResult.recipeIdea,
+        identifiedIngredients: analysisResult.identifiedIngredients,
+        generatedRecipe: analysisResult.generatedRecipe,
       };
       
       onAnalysisComplete(estimation, imagePreview);
       toast({
         title: "Analysis Complete!",
-        description: "Dish name, calories, ingredients, and a recipe idea have been generated.",
+        description: "Dish name, calories, ingredients, and a full recipe have been generated.",
       });
 
     } catch (error) {
@@ -100,7 +100,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
         <CardTitle className="flex items-center gap-2 text-xl font-headline text-primary">
             <Sparkles /> AI Meal Analyzer
         </CardTitle>
-        <CardDescription>Upload a photo of your meal to get an estimate of its calories, ingredients, and a recipe idea.</CardDescription>
+        <CardDescription>Upload a photo of your meal to get its calorie estimate, ingredients, and a full recipe.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -131,7 +131,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
 
           {imagePreview && (
             <div className="mt-4 border border-dashed border-border rounded-lg p-4 flex justify-center items-center bg-muted/50">
-              <Image src={imagePreview} alt="Meal preview" width={300} height={200} className="rounded-md object-contain max-h-60" data-ai-hint="food meal" />
+              <Image src={imagePreview} alt="Meal preview" width={300} height={200} className="rounded-md object-contain max-h-60" data-ai-hint="food meal"/>
             </div>
           )}
 
@@ -141,7 +141,7 @@ export function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
             ) : (
               <ChefHat className="mr-2 h-4 w-4" />
             )}
-            Analyze Meal & Get Recipe Idea
+            Analyze Meal & Get Full Recipe
           </Button>
         </form>
       </CardContent>

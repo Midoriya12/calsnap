@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Info, ListTree, Utensils, Lightbulb, ClipboardList, Zap, Loader2, AlertCircle, Clock, Users, ChefHat, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +29,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   const handleIngredientClick = async (ingredientName: string) => {
     setIsLoadingNutrition(true);
     setNutritionError(null);
-    setSelectedIngredientNutrition(null); // Reset previous data
+    setSelectedIngredientNutrition(null); 
     try {
       const response = await fetch(`/api/nutrition?ingredientName=${encodeURIComponent(ingredientName)}`);
       if (!response.ok) {
@@ -50,6 +50,8 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
   };
 
+  const { dishName, estimatedCalories, identifiedIngredients, generatedRecipe } = estimation;
+
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
@@ -60,42 +62,42 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
       <CardContent className="space-y-6">
         {uploadedImage && (
           <div className="mb-4">
-            <img src={uploadedImage} alt="Uploaded meal" className="rounded-lg max-h-64 w-full object-contain" data-ai-hint="food meal" />
+            <img src={uploadedImage} alt="Uploaded meal" className="rounded-lg max-h-64 w-full object-contain" data-ai-hint="food meal"/>
           </div>
         )}
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Utensils className="text-accent" /> Identified Dish</h3>
-          <p className="text-md font-medium text-foreground">{estimation.dishName || "N/A"}</p>
+          <p className="text-md font-medium text-foreground">{dishName || "N/A"}</p>
         </div>
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories (Whole Meal)</h3>
           <Badge variant="secondary" className="text-lg px-3 py-1 bg-accent/20 text-accent-foreground">
-            {estimation.estimatedCalories} kcal
+            {estimatedCalories} kcal
           </Badge>
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients</h3>
-          <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see mock nutritional details.</p>
-          {estimation.ingredients.length > 0 ? (
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients (Identified in Photo)</h3>
+          <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see nutritional details from USDA.</p>
+          {identifiedIngredients.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {estimation.ingredients.map((ingredient, index) => (
+              {identifiedIngredients.map((ingredient, index) => (
                 <Badge
-                  key={`${ingredient}-${index}`} // Using index with ingredient name for more stable key
+                  key={`${ingredient}-${index}`} 
                   variant="outline"
                   className="text-sm cursor-pointer hover:bg-accent/10 active:bg-accent/20"
                   onClick={() => handleIngredientClick(ingredient)}
-                  tabIndex={0} // Make it focusable
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleIngredientClick(ingredient);}} // Keyboard accessibility
+                  tabIndex={0} 
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleIngredientClick(ingredient);}} 
                 >
                   {ingredient}
                 </Badge>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No specific ingredients readily identifiable.</p>
+            <p className="text-muted-foreground">No specific ingredients readily identifiable in the photo.</p>
           )}
         </div>
         
@@ -103,17 +105,17 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
 
         <div>
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <ClipboardList className="text-accent" /> Nutritional Dashboard (Per Ingredient)
+            <ClipboardList className="text-accent" /> Nutritional Dashboard (Per Ingredient - USDA Data)
           </h3>
           {isLoadingNutrition && (
              <Card className="mt-2 bg-muted/50 p-4 animate-pulse">
-                <Skeleton className="h-5 w-1/2 mb-3" /> {/* For Title */}
+                <Skeleton className="h-5 w-1/2 mb-3" /> 
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-3/4" /> 
                   <Skeleton className="h-4 w-full" /> 
                   <Skeleton className="h-4 w-2/3" /> 
                   <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-3 w-1/3 mt-1" /> {/* For source */}
+                  <Skeleton className="h-3 w-1/3 mt-1" />
                 </div>
               </Card>
           )}
@@ -138,7 +140,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           )}
           {!isLoadingNutrition && !nutritionError && !selectedIngredientNutrition && (
             <p className="text-sm text-muted-foreground mt-2">
-              Select an ingredient above to view its (mock) nutritional details here. Full USDA integration coming soon!
+              Select an ingredient identified in the photo to view its nutritional details here.
             </p>
           )}
         </div>
@@ -146,10 +148,49 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
         
         <div>
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Lightbulb className="text-accent" /> AI Recipe Idea</h3>
-          <p className="text-sm text-foreground/90 whitespace-pre-line">
-            {estimation.recipeIdea || "No specific recipe idea generated for this image."}
-          </p>
+          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-primary"><BookOpen /> AI Generated Recipe: {generatedRecipe.name}</h3>
+          
+          <p className="text-md text-muted-foreground mb-4">{generatedRecipe.description}</p>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-6">
+            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+              <Clock size={20} className="text-accent mb-1" />
+              <span className="font-semibold">Prep Time</span>
+              <span>{generatedRecipe.preparationTime}</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+              <ChefHat size={20} className="text-accent mb-1" />
+              <span className="font-semibold">Cook Time</span>
+              <span>{generatedRecipe.cookingTime}</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
+              <Users size={20} className="text-accent mb-1" />
+              <span className="font-semibold">Servings</span>
+              <span>{generatedRecipe.servings}</span>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
+              <ListChecks /> Recipe Ingredients
+            </h4>
+            <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
+              {generatedRecipe.ingredientsList.map((ingredient, index) => (
+                <li key={`recipe-ing-${index}`}>{ingredient}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
+              <ListChecks /> Recipe Instructions
+            </h4>
+            <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
+              {generatedRecipe.instructionsList.map((step, index) => (
+                <li key={`recipe-instr-${index}`}>{step}</li>
+              ))}
+            </ol>
+          </div>
         </div>
 
       </CardContent>

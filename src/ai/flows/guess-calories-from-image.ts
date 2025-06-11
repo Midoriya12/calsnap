@@ -4,9 +4,9 @@
 
 /**
  * @fileOverview This flow estimates the calorie count of a meal from an image,
- * identifies the dish, lists ingredients, and suggests a recipe idea.
+ * identifies the dish, lists ingredients identified in the photo, and suggests a detailed recipe.
  *
- * - guessCaloriesFromImage - Estimates calories, identifies dish, ingredients, and recipe idea.
+ * - guessCaloriesFromImage - Estimates calories, identifies dish, ingredients, and generates a full recipe.
  * - GuessCaloriesFromImageInput - The input type for the guessCaloriesFromImage function.
  * - GuessCaloriesFromImageOutput - The return type for the guessCaloriesFromImage function.
  */
@@ -25,13 +25,23 @@ export type GuessCaloriesFromImageInput = z.infer<
   typeof GuessCaloriesFromImageInputSchema
 >;
 
+const DetailedRecipeSchema = z.object({
+  name: z.string().describe("The name of the recipe for the identified dish."),
+  description: z.string().describe("A short, appealing description of the recipe (1-2 sentences)."),
+  preparationTime: z.string().describe("Estimated preparation time for the recipe (e.g., '15 minutes')."),
+  cookingTime: z.string().describe("Estimated cooking time for the recipe (e.g., '30 minutes')."),
+  servings: z.string().describe("Number of servings the recipe makes (e.g., '2 servings', '4-6 servings')."),
+  ingredientsList: z.array(z.string()).describe("A comprehensive list of ingredients required for the recipe, including quantities (e.g., '1 cup flour', '2 tbsp olive oil')."),
+  instructionsList: z.array(z.string()).describe("Step-by-step cooking instructions for the recipe."),
+});
+
 const GuessCaloriesFromImageOutputSchema = z.object({
   dishName: z.string().describe('The name of the dish identified in the photo.'),
-  ingredients: z.array(z.string()).describe('List of key ingredients identified in the meal.'),
+  identifiedIngredients: z.array(z.string()).describe('List of key ingredients *identified in the photo* of the meal.'),
   estimatedCalories: z
     .number()
-    .describe('The estimated calorie count of the meal.'),
-  recipeIdea: z.string().describe('A brief recipe idea or key preparation steps for the dish (2-3 sentences).')
+    .describe('The estimated calorie count of the *meal in the photo*.'),
+  generatedRecipe: DetailedRecipeSchema.describe("A detailed recipe generated for the identified dish, including ingredients, instructions, prep time, cooking time, and servings.")
 });
 export type GuessCaloriesFromImageOutput = z.infer<
   typeof GuessCaloriesFromImageOutputSchema
@@ -50,11 +60,18 @@ const guessCaloriesFromImagePrompt = ai.definePrompt({
   prompt: `You are an expert nutritionist and chef. You will be provided with a photo of a meal.
 Based on the photo:
 1. Identify the name of the dish.
-2. List the key ingredients you can identify in the meal.
-3. Estimate the total calories for the meal shown.
-4. Provide a brief (2-3 sentences) recipe idea or key preparation steps for this dish or a similar one.
+2. List the key ingredients you can *identify in the photo*.
+3. Estimate the total calories for the *meal shown in the photo*.
+4. Generate a detailed recipe for the identified dish. This recipe should include:
+    a. A recipe name (can be the same as the identified dish name or a more descriptive recipe title).
+    b. A short, appealing description of the recipe (1-2 sentences).
+    c. Estimated preparation time (e.g., '15 minutes').
+    d. Estimated cooking time (e.g., '30 minutes').
+    e. Number of servings the recipe makes (e.g., '2 servings', '4-6 servings').
+    f. A comprehensive list of ingredients required for *making the recipe*, including quantities (e.g., '1 cup flour', '2 tbsp olive oil'). This list might differ from the ingredients merely identified in the photo.
+    g. Step-by-step cooking instructions for the recipe.
 
-Respond with a JSON object.
+Respond with a JSON object structured according to the output schema.
 Photo: {{media url=photoDataUri}}`,
 });
 

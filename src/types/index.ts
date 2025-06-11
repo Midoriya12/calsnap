@@ -5,7 +5,7 @@ export interface Recipe {
   imageUrl: string;
   cuisine: string;
   ingredients: string[];
-  instructions: string[]; // Added instructions
+  instructions: string[];
   dietaryRestrictions: string[];
   calories?: number;
   description: string;
@@ -13,18 +13,28 @@ export interface Recipe {
   servings: number;
 }
 
+export interface DetailedRecipe {
+  name: string;
+  description: string;
+  preparationTime: string;
+  cookingTime: string;
+  servings: string;
+  ingredientsList: string[];
+  instructionsList: string[];
+}
+
 export interface AIEstimation {
   dishName: string;
   estimatedCalories: number;
-  ingredients: string[];
-  recipeIdea: string;
+  identifiedIngredients: string[]; // Renamed from 'ingredients'
+  generatedRecipe: DetailedRecipe;
 }
 
 export interface IngredientNutritionInfo {
   ingredient: string;
-  calories: number; // Storing as number for potential calculations
-  protein: string; // e.g., "10g"
-  fat: string;     // e.g., "5g"
-  carbs: string;   // e.g., "20g"
+  calories: number; 
+  protein: string; 
+  fat: string;     
+  carbs: string;   
   source: string;
 }
