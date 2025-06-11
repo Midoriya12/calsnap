@@ -77,3 +77,10 @@ export interface DailyTotals {
   carbs: number;
   fiber: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: number;
+}

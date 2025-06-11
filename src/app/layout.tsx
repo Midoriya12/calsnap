@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
+import { ChatbotFab } from '@/components/features/chatbot-fab'; // Import Chatbot FAB
 
 export const metadata: Metadata = {
   title: 'CalSnap App',
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <ChatbotFab /> {/* Add Chatbot FAB here */}
         </AuthProvider>
       </body>
     </html>
