@@ -20,6 +20,9 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     router.push(`/recipes/${recipe.id}`); // Navigate to recipe details page
   };
 
+  // Generate a more specific AI hint from the recipe name
+  const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
+
   return (
     <div onClick={handleRecipeClick} className="cursor-pointer h-full">
       <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -31,7 +34,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               layout="fill" 
               objectFit="cover" 
               className="rounded-t-lg"
-              data-ai-hint={`${recipe.cuisine} food`}
+              data-ai-hint={aiHint} // Use more specific hint
             />
           </div>
         </CardHeader>

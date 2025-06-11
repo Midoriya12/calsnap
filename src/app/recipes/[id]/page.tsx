@@ -39,6 +39,9 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
     );
   }
 
+  // Generate a more specific AI hint from the recipe name
+  const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="py-4 px-6 shadow-md bg-card sticky top-0 z-50">
@@ -61,7 +64,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
                 layout="fill"
                 objectFit="cover"
                 className="rounded-t-lg"
-                data-ai-hint={`${recipe.cuisine} dish food`}
+                data-ai-hint={aiHint} // Use more specific hint
               />
             </div>
           </CardHeader>
