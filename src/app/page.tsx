@@ -1,7 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import { AppHeader } from '@/components/layout/header';
 import { ImageUploader } from '@/components/features/image-uploader';
 import { NutritionalInfoDisplay } from '@/components/features/nutritional-info-display';
@@ -9,16 +11,53 @@ import { RecipeCatalog } from '@/components/features/recipe-catalog';
 import { AdPlaceholder } from '@/components/ad-placeholder';
 import type { AIEstimation } from '@/types';
 import { Separator } from '@/components/ui/separator';
-import { Sparkles, Utensils } from 'lucide-react';
+import { Sparkles, Utensils, Loader2 } from 'lucide-react';
 
 export default function CalSnapPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [aiEstimation, setAiEstimation] = useState<AIEstimation | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | undefined>(undefined);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+
+  useEffect(() => {
+    // AuthProvider handles initial load. This effect handles redirection.
+    if (user === null) { // Explicitly check for null after initial auth check
+      router.push('/login?redirect=/');
+    } else if (user) {
+      setIsLoadingPage(false); // User is authenticated, stop loading
+    }
+    // If user is undefined (still loading from AuthProvider), do nothing yet.
+    // AuthProvider will show its own loader.
+  }, [user, router]);
 
   const handleAnalysisComplete = (estimation: AIEstimation, imagePreview: string) => {
     setAiEstimation(estimation);
     setUploadedImagePreview(imagePreview);
   };
+
+  if (isLoadingPage && user === null ) { // Show loader if redirecting or initial check pending from this page
+     return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <div className="flex-grow flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) { // If still no user after initial checks, means redirect should happen or is in progress
+    return (
+       <div className="flex flex-col min-h-screen bg-background">
+        <AppHeader />
+        <div className="flex-grow flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning={true}>
