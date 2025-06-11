@@ -76,7 +76,12 @@ const searchRecipesTool = ai.defineTool(
 
 const RecipeChatInputSchema = z.object({
   userQuery: z.string().describe("The user's question or statement to the chatbot."),
-  // conversationHistory: z.array(z.object({ role: z.enum(['user', 'model']), parts: z.array(z.object({ text: z.string()}))})).optional().describe("Previous turns in the conversation, if any.")
+  conversationHistory: z.array(
+    z.object({ 
+      role: z.enum(['user', 'model']), 
+      parts: z.array(z.object({ text: z.string()}))
+    })
+  ).optional().describe("Previous turns in the conversation, if any, to provide context. The order is oldest message first.")
 });
 export type RecipeChatInput = z.infer<typeof RecipeChatInputSchema>;
 
@@ -103,15 +108,16 @@ If a user asks about general calorie information for a food item not in a recipe
 If no recipes are found, say so politely and perhaps offer to search for something else.
 Keep your responses concise and conversational.
 
+{{#if conversationHistory}}
+Conversation History (oldest to newest):
+{{#each conversationHistory}}
+{{this.role}}: {{#each this.parts}}{{this.text}}{{/each}}
+{{/each}}
+
+Now, considering the above history, respond to the current user query.
+{{/if}}
 User's query: {{{userQuery}}}
 `,
-// TODO: Add conversation history for more context awareness in future iterations.
-// {{#if conversationHistory}}
-// Conversation History:
-// {{#each conversationHistory}}
-//   {{this.role}}: {{#each this.parts}}{{this.text}}{{/each}}
-// {{/each}}
-// {{/if}}
 });
 
 const recipeChatFlow = ai.defineFlow(
@@ -121,8 +127,8 @@ const recipeChatFlow = ai.defineFlow(
     outputSchema: RecipeChatOutputSchema,
   },
   async (input) => {
-    const llmResponse = await recipeChatPrompt(input); // Pass userQuery and potentially history
-    const output = llmResponse.output; // Corrected: access as a property
+    const llmResponse = await recipeChatPrompt(input); 
+    const output = llmResponse.output;
     if (!output?.botResponse) {
       // Fallback response if LLM somehow doesn't generate one
       return { botResponse: "I'm sorry, I couldn't process that request. Could you try asking in a different way?" };

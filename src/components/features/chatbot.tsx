@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Send, Bot, User, Loader2, X } from 'lucide-react';
 import { recipeChat } from '@/ai/flows/recipe-chat-flow';
 import type { ChatMessage } from '@/types';
@@ -16,35 +16,44 @@ interface ChatbotProps {
   onClose: () => void;
 }
 
+const initialGreetingMessage: ChatMessage = {
+  id: 'greeting-initial',
+  text: "Hi there! I'm CalSnap AI. How can I help you with recipes, ingredients, or calorie info today?",
+  sender: 'bot',
+  timestamp: Date.now(),
+};
+
 export function Chatbot({ isOpen, onClose }: ChatbotProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([initialGreetingMessage]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll to bottom when new messages are added
-    if (scrollAreaRef.current) {
+    // Scroll to bottom when new messages are added or when chat opens
+    if (isOpen && scrollAreaRef.current) {
       const scrollableViewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
       if (scrollableViewport) {
-        scrollableViewport.scrollTop = scrollableViewport.scrollHeight;
+        // Timeout to allow DOM to update before scrolling
+        setTimeout(() => scrollableViewport.scrollTop = scrollableViewport.scrollHeight, 0);
       }
     }
-  }, [messages]);
+  }, [messages, isOpen]);
   
-  // Initial greeting from bot when chat opens and messages are empty
+  // Manage initial greeting and clearing history based on isOpen
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([
-        {
-          id: 'greeting',
-          text: "Hi there! I'm CalSnap AI. How can I help you with recipes, ingredients, or calorie info today?",
-          sender: 'bot',
-          timestamp: Date.now(),
-        },
-      ]);
+    if (isOpen) {
+      // If chat is opened and messages are empty or only contain a placeholder, set the initial greeting.
+      // This handles the case where chat was closed (messages cleared) and then reopened.
+      if (messages.length === 0 || (messages.length === 1 && messages[0].id === 'closed-chat-placeholder')) {
+        setMessages([{...initialGreetingMessage, id: `greeting-${Date.now()}`, timestamp: Date.now()}]);
+      }
+    } else {
+      // When chat is closed, reset messages to a placeholder state.
+      // This effectively clears the session's conversational memory.
+      setMessages([{id: 'closed-chat-placeholder', text:'', sender: 'bot', timestamp: 0}]); 
     }
-  }, [isOpen, messages.length]);
+  }, [isOpen]);
 
 
   const handleSendMessage = async () => {
@@ -56,12 +65,26 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
       sender: 'user',
       timestamp: Date.now(),
     };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+    // Prepare history from messages *before* adding the new userMessage
+    // This history is what the AI will see as prior context.
+    const conversationHistoryForAPI = messages
+      .filter(msg => msg.id !== 'closed-chat-placeholder') // Don't send placeholder
+      .map((msg) => ({
+        role: msg.sender === 'user' ? 'user' : ('model' as 'user' | 'model'),
+        parts: [{ text: msg.text }],
+      }));
+    
+    const currentQuery = inputValue; // Capture current input value before clearing
+    setMessages((prevMessages) => [...prevMessages.filter(msg => msg.id !== 'closed-chat-placeholder'), userMessage]);
     setInputValue('');
     setIsLoading(true);
 
     try {
-      const response = await recipeChat({ userQuery: userMessage.text });
+      const response = await recipeChat({ 
+        userQuery: currentQuery,
+        conversationHistory: conversationHistoryForAPI
+      });
       const botMessage: ChatMessage = {
         id: `bot-${Date.now()}`,
         text: response.botResponse,
@@ -87,6 +110,8 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     return null;
   }
 
+  const displayedMessages = messages.filter(msg => msg.id !== 'closed-chat-placeholder');
+
   return (
     <div className="fixed bottom-20 right-4 md:right-6 w-[350px] h-[500px] bg-card shadow-xl rounded-lg border border-border flex flex-col z-50">
       <div className="flex items-center justify-between p-3 border-b border-border">
@@ -100,7 +125,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
       </div>
 
       <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
-        {messages.map((msg) => (
+        {displayedMessages.map((msg) => (
           <div
             key={msg.id}
             className={cn(
@@ -167,6 +192,12 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
             placeholder="Ask about recipes, ingredients..."
             className="flex-grow"
             disabled={isLoading}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
           />
           <Button type="submit" size="icon" disabled={isLoading || inputValue.trim() === ''}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -179,3 +210,4 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     </div>
   );
 }
+
