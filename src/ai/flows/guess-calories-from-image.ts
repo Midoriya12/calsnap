@@ -37,10 +37,10 @@ const DetailedRecipeSchema = z.object({
 
 const GuessCaloriesFromImageOutputSchema = z.object({
   dishName: z.string().describe('The name of the dish identified in the photo.'),
-  identifiedIngredients: z.array(z.string()).describe('List of key ingredients *identified in the photo* of the meal.'),
+  identifiedIngredients: z.array(z.string()).describe('A list of primary ingredients *expected to be in the dish*, guided by the photo. This may include common, non-visible items if typical for the dish (e.g., cooking oil, basic spices).'),
   estimatedCalories: z
     .number()
-    .describe('The estimated calorie count of the *meal in the photo*.'),
+    .describe('The estimated calorie count for a *typical single serving of the identified dish as depicted or implied by the photo*, considering common preparation methods and ingredients.'),
   generatedRecipe: DetailedRecipeSchema.describe("A detailed recipe generated for the identified dish, including ingredients, instructions, prep time, cooking time, and servings.")
 });
 export type GuessCaloriesFromImageOutput = z.infer<
@@ -60,8 +60,8 @@ const guessCaloriesFromImagePrompt = ai.definePrompt({
   prompt: `You are an expert nutritionist and chef. You will be provided with a photo of a meal.
 Based on the photo:
 1. Identify the name of the dish.
-2. List the key ingredients you can *identify in the photo*.
-3. Estimate the total calories for the *meal shown in the photo*.
+2. List the primary ingredients expected in this meal. While the photo is your main guide, you can infer common, non-visible ingredients (like cooking oil, salt, common spices for the cuisine) if they are almost certain to be part of preparing this specific dish. Focus on the main components.
+3. Estimate the total calories for a *typical single serving of the identified dish as depicted or implied by the photo*. Base this on common preparation methods and a standard portion size for one person.
 4. Generate a detailed recipe for the identified dish. This recipe should include:
     a. A recipe name (can be the same as the identified dish name or a more descriptive recipe title).
     b. A short, appealing description of the recipe (1-2 sentences).
@@ -86,3 +86,5 @@ const guessCaloriesFromImageFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
