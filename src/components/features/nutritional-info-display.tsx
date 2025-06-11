@@ -225,17 +225,17 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
         <Separator />
 
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-semibold flex items-center gap-2 text-primary">
-              <BookOpen /> AI Generated Recipe
-            </h3>
-            {!isRecipeVisible && (
+          <h3 className="text-2xl font-semibold flex items-center gap-2 text-primary mb-3">
+            <BookOpen /> AI Generated Recipe
+          </h3>
+          {!isRecipeVisible && (
+            <div className="mb-4">
               <Button onClick={() => setIsRecipeVisible(true)} variant="outline" size="sm">
                 <BookOpen className="mr-2 h-4 w-4" />
                 Show Full Recipe
               </Button>
-            )}
-          </div>
+            </div>
+          )}
 
           {isRecipeVisible && (
             <>
