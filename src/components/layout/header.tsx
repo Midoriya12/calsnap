@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Leaf, Archive, LogIn, LogOut, UserPlus, UserCircle } from 'lucide-react';
+import { Leaf, Archive, LogIn, LogOut, UserPlus, UserCircle, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
@@ -53,6 +53,12 @@ export function AppHeader() {
             <Button variant="ghost" size="sm" disabled>Loading...</Button>
           ) : user ? (
             <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/daily-log" className="flex items-center gap-1.5">
+                  <CalendarDays className="h-5 w-5" />
+                  Daily Log
+                </Link>
+              </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link href="/saved-meals" className="flex items-center gap-1.5">
                   <Archive className="h-5 w-5" />
