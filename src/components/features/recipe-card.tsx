@@ -7,22 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Utensils, Clock, Users, Flame, Eye } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
-  const { toast } = useToast();
+  const router = useRouter(); // Initialize router
 
   const handleRecipeClick = () => {
-    toast({
-      title: `Viewing: ${recipe.name}`,
-      description: "Full recipe details page/modal is coming soon! This is a placeholder.",
-    });
-    // In a real app, you would navigate to a recipe details page or open a modal here.
-    console.log("Clicked on recipe:", recipe.name, recipe.id);
+    router.push(`/recipes/${recipe.id}`); // Navigate to recipe details page
   };
 
   return (
@@ -69,9 +64,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
+          {/* Button also navigates; stopPropagation prevents double navigation if card also has onClick */}
           <Button variant="outline" size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); handleRecipeClick(); }}>
             <Eye className="mr-2 h-4 w-4" />
-            View Recipe (Info)
+            View Full Recipe
           </Button>
         </CardFooter>
       </Card>

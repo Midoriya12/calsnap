@@ -5,6 +5,7 @@ export interface Recipe {
   imageUrl: string;
   cuisine: string;
   ingredients: string[];
+  instructions: string[]; // Added instructions
   dietaryRestrictions: string[];
   calories?: number;
   description: string;
