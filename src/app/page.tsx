@@ -21,7 +21,7 @@ export default function CalSnapPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning={true}>
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         <section id="ai-analyzer" aria-labelledby="ai-analyzer-heading">
