@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Leaf, Archive, LogIn, LogOut, UserPlus, UserCircle, CalendarDays } from 'lucide-react';
+import { Leaf, Archive, LogIn, LogOut, UserPlus, UserCircle, CalendarDays, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
@@ -48,21 +48,42 @@ export function AppHeader() {
             CalSnap
           </h1>
         </Link>
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-1 md:gap-2">
           {loading ? (
             <Button variant="ghost" size="sm" disabled>Loading...</Button>
           ) : user ? (
             <>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                <Link href="/recipes" className="flex items-center gap-1.5">
+                  <BookOpen className="h-5 w-5" />
+                  Recipes
+                </Link>
+              </Button>
+               <Button asChild variant="ghost" size="icon" className="md:hidden">
+                <Link href="/recipes" aria-label="Recipes">
+                  <BookOpen className="h-5 w-5" />
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
                 <Link href="/daily-log" className="flex items-center gap-1.5">
                   <CalendarDays className="h-5 w-5" />
                   Daily Log
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="icon" className="md:hidden">
+                <Link href="/daily-log" aria-label="Daily Log">
+                  <CalendarDays className="h-5 w-5" />
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
                 <Link href="/saved-meals" className="flex items-center gap-1.5">
                   <Archive className="h-5 w-5" />
                   Saved Meals
+                </Link>
+              </Button>
+               <Button asChild variant="ghost" size="icon" className="md:hidden">
+                <Link href="/saved-meals" aria-label="Saved Meals">
+                  <Archive className="h-5 w-5" />
                 </Link>
               </Button>
               <DropdownMenu>
@@ -84,9 +105,6 @@ export function AppHeader() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {/* <DropdownMenuItem disabled>Profile</DropdownMenuItem>
-                  <DropdownMenuItem disabled>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator /> */}
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out

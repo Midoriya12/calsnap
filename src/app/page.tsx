@@ -7,36 +7,37 @@ import { useAuth } from '@/contexts/auth-context';
 import { AppHeader } from '@/components/layout/header';
 import { ImageUploader } from '@/components/features/image-uploader';
 import { NutritionalInfoDisplay } from '@/components/features/nutritional-info-display';
-import { RecipeCatalog } from '@/components/features/recipe-catalog';
 import { AdPlaceholder } from '@/components/ad-placeholder';
 import type { AIEstimation } from '@/types';
-import { Separator } from '@/components/ui/separator';
-import { Sparkles, Utensils, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 
 export default function CalSnapPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [aiEstimation, setAiEstimation] = useState<AIEstimation | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | undefined>(undefined);
-  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [isLoadingPage, setIsLoadingPage] = useState(true); // Manages loading state for this page specifically
 
   useEffect(() => {
-    // AuthProvider handles initial load. This effect handles redirection.
-    if (user === null) { // Explicitly check for null after initial auth check
-      router.push('/login?redirect=/');
-    } else if (user) {
-      setIsLoadingPage(false); // User is authenticated, stop loading
+    // This effect handles redirection once auth state is known.
+    // AuthProvider handles the initial app-wide loading screen.
+    if (!authLoading) { // Only proceed if AuthProvider is done loading
+      if (!user) {
+        router.push('/login?redirect=/');
+      } else {
+        setIsLoadingPage(false); // User is authenticated and AuthProvider is done, stop page-specific loading
+      }
     }
-    // If user is undefined (still loading from AuthProvider), do nothing yet.
-    // AuthProvider will show its own loader.
-  }, [user, router]);
+  }, [user, authLoading, router]);
+
 
   const handleAnalysisComplete = (estimation: AIEstimation, imagePreview: string) => {
     setAiEstimation(estimation);
     setUploadedImagePreview(imagePreview);
   };
 
-  if (isLoadingPage && user === null ) { // Show loader if redirecting or initial check pending from this page
+  // Show loader if AuthProvider is still loading OR if this page is loading (e.g., waiting for auth check to redirect)
+  if (authLoading || isLoadingPage) {
      return (
       <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
@@ -47,12 +48,15 @@ export default function CalSnapPage() {
     );
   }
   
-  if (!user) { // If still no user after initial checks, means redirect should happen or is in progress
+  // If, after all loading, there's still no user, it implies a redirect should occur or is in progress.
+  // This state might be brief or might indicate an issue if redirection doesn't happen.
+  if (!user) {
     return (
        <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="ml-2">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -77,7 +81,7 @@ export default function CalSnapPage() {
              {!aiEstimation && (
                 <div className="lg:col-span-2 flex flex-col items-center justify-center h-full bg-card rounded-lg p-8 shadow-md border border-dashed">
                     <Sparkles className="h-16 w-16 text-primary mb-6" />
-                    <h2 className="text-2xl font-semibold text-foreground mb-3">Welcome to CalSnap!</h2>
+                    <h2 id="ai-analyzer-heading" className="text-2xl font-semibold text-foreground mb-3">Welcome to CalSnap!</h2>
                     <p className="text-muted-foreground text-center mb-1">
                         Ready to discover the secrets of your meal?
                     </p>
@@ -90,19 +94,7 @@ export default function CalSnapPage() {
           </div>
         </section>
 
-        <Separator className="my-12" />
-
-        <section id="recipe-catalog" aria-labelledby="recipe-catalog-heading">
-           <div className="text-center mb-8">
-            <h2 id="recipe-catalog-heading" className="text-3xl font-bold text-primary flex items-center justify-center gap-3">
-              <Utensils className="h-8 w-8" /> Recipe Catalog
-            </h2>
-            <p className="text-muted-foreground mt-2">Explore delicious recipes or get inspired for your next meal.</p>
-          </div>
-          <RecipeCatalog />
-        </section>
-
-        <footer className="text-center text-muted-foreground text-sm py-8">
+        <footer className="text-center text-muted-foreground text-sm py-8 border-t mt-auto">
           <p>&copy; {new Date().getFullYear()} CalSnap. All rights reserved.</p>
           <p>Meal data is AI-estimated and for informational purposes only. Consult a nutritionist for dietary advice.</p>
         </footer>
