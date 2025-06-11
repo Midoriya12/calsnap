@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import type { NewLoggedMealData } from '@/types';
+import React from 'react'; // Added React import
 
 const logMealSchema = z.object({
   mealName: z.string().min(1, { message: 'Meal name is required' }),
