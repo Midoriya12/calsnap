@@ -21,9 +21,9 @@ export interface AIEstimation {
 
 export interface IngredientNutritionInfo {
   ingredient: string;
-  calories: number;
-  protein: string;
-  fat: string;
-  carbs: string;
+  calories: number; // Storing as number for potential calculations
+  protein: string; // e.g., "10g"
+  fat: string;     // e.g., "5g"
+  carbs: string;   // e.g., "20g"
   source: string;
 }
