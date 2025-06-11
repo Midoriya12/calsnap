@@ -74,13 +74,13 @@ const searchRecipesTool = ai.defineTool(
   }
 );
 
-export const RecipeChatInputSchema = z.object({
+const RecipeChatInputSchema = z.object({
   userQuery: z.string().describe("The user's question or statement to the chatbot."),
   // conversationHistory: z.array(z.object({ role: z.enum(['user', 'model']), parts: z.array(z.object({ text: z.string()}))})).optional().describe("Previous turns in the conversation, if any.")
 });
 export type RecipeChatInput = z.infer<typeof RecipeChatInputSchema>;
 
-export const RecipeChatOutputSchema = z.object({
+const RecipeChatOutputSchema = z.object({
   botResponse: z.string().describe("The chatbot's response to the user."),
 });
 export type RecipeChatOutput = z.infer<typeof RecipeChatOutputSchema>;
@@ -130,3 +130,4 @@ const recipeChatFlow = ai.defineFlow(
     return output;
   }
 );
+
