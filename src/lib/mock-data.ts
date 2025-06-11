@@ -16,7 +16,7 @@ export const mockRecipes: Recipe[] = [
       'Quickly pour in the egg mixture, stirring constantly to prevent eggs from scrambling. If too thick, add a little reserved pasta water until creamy.',
       'Serve immediately with extra grated cheese and pepper.'
     ],
-    dietaryRestrictions: [],
+    dietaryRestrictions: ['Non-Veg'],
     calories: 600,
     description: 'A creamy and delicious classic Italian pasta dish, rich in flavor and tradition.',
     preparationTime: '30 minutes',
@@ -38,7 +38,7 @@ export const mockRecipes: Recipe[] = [
       'Reduce heat, cover, and simmer for 20-25 minutes, or until lentils are tender.',
       'Season with salt and pepper. Serve hot, optionally with a squeeze of lemon juice.'
     ],
-    dietaryRestrictions: ['Vegan', 'Gluten-Free'],
+    dietaryRestrictions: ['Vegan', 'Gluten-Free', 'Veg', 'Low Fat', 'High Fiber'],
     calories: 350,
     description: 'A hearty and nutritious vegan soup perfect for a cold day, packed with vegetables and spices.',
     preparationTime: '45 minutes',
@@ -61,7 +61,7 @@ export const mockRecipes: Recipe[] = [
       'Cook, stirring, for 2-3 minutes until sauce has thickened and coated the chicken and vegetables.',
       'Serve hot over cooked rice.'
     ],
-    dietaryRestrictions: [],
+    dietaryRestrictions: ['Non-Veg'],
     calories: 450,
     description: 'A quick and flavorful chicken stir-fry with a sweet and savory teriyaki sauce and crisp vegetables.',
     preparationTime: '25 minutes',
@@ -83,7 +83,7 @@ export const mockRecipes: Recipe[] = [
       'Pour dressing over the salad and toss gently to combine.',
       'Sprinkle with feta cheese before serving. Can be served warm or cold.'
     ],
-    dietaryRestrictions: ['Gluten-Free', 'Vegetarian'],
+    dietaryRestrictions: ['Gluten-Free', 'Vegetarian', 'Veg', 'Low Carb'],
     calories: 400,
     description: 'A light and refreshing quinoa salad packed with colorful roasted vegetables and a zesty lemon dressing.',
     preparationTime: '50 minutes',
@@ -104,7 +104,7 @@ export const mockRecipes: Recipe[] = [
       'Warm taco shells according to package directions.',
       'Assemble tacos: Fill shells with beef mixture, then add desired toppings and homemade salsa.'
     ],
-    dietaryRestrictions: [],
+    dietaryRestrictions: ['Non-Veg'],
     calories: 520,
     description: 'Flavorful beef tacos with fresh homemade salsa, perfect for a fun and easy weeknight meal.',
     preparationTime: '35 minutes',
@@ -126,7 +126,7 @@ export const mockRecipes: Recipe[] = [
       'Stir in Thai basil leaves just before serving.',
       'Serve hot with jasmine rice.'
     ],
-    dietaryRestrictions: ['Vegan', 'Gluten-Free'],
+    dietaryRestrictions: ['Vegan', 'Gluten-Free', 'Veg'],
     calories: 480,
     description: 'Aromatic and spicy Thai green curry with crispy tofu and a medley of vegetables, served over jasmine rice.',
     preparationTime: '40 minutes',
@@ -149,7 +149,7 @@ export const mockRecipes: Recipe[] = [
       'Once the rice is creamy and al dente, remove from heat. Stir in grated Parmesan cheese.',
       'Season with salt and pepper to taste. Garnish with fresh parsley and serve immediately.'
     ],
-    dietaryRestrictions: ['Vegetarian'],
+    dietaryRestrictions: ['Vegetarian', 'Veg'],
     calories: 550,
     description: 'Creamy and decadent mushroom risotto made with Arborio rice and a mix of fresh mushrooms.',
     preparationTime: '1 hour',
@@ -173,7 +173,7 @@ export const mockRecipes: Recipe[] = [
       'Taste and adjust seasoning with salt and a pinch of sugar if needed.',
       'Serve hot with naan bread or basmati rice.'
     ],
-    dietaryRestrictions: [],
+    dietaryRestrictions: ['Non-Veg'],
     calories: 650,
     description: 'A rich and creamy Indian butter chicken curry, mildly spiced and full of flavor. Best served with naan or rice.',
     preparationTime: '50 minutes',
@@ -194,7 +194,7 @@ export const mockRecipes: Recipe[] = [
       'Sprinkle feta cheese over the top.',
       'Serve immediately or chill for later. Tastes even better after marinating for a bit!'
     ],
-    dietaryRestrictions: ['Vegetarian', 'Gluten-Free'],
+    dietaryRestrictions: ['Vegetarian', 'Gluten-Free', 'Veg', 'Keto', 'Low Carb'],
     calories: 300,
     description: 'A crisp and refreshing Greek salad with classic ingredients like tomatoes, cucumbers, olives, and feta cheese.',
     preparationTime: '15 minutes',
@@ -219,7 +219,7 @@ export const mockRecipes: Recipe[] = [
       'Bake for 9-11 minutes, or until edges are golden brown and centers are set.',
       'Let cookies cool on baking sheets for a few minutes before transferring to wire racks to cool completely.'
     ],
-    dietaryRestrictions: ['Vegetarian'],
+    dietaryRestrictions: ['Vegetarian', 'Veg'],
     calories: 150, // Per cookie
     description: 'The ultimate classic chocolate chip cookies: soft, chewy, and loaded with chocolate chips.',
     preparationTime: '20 minutes + chill time (optional)',
@@ -228,3 +228,6 @@ export const mockRecipes: Recipe[] = [
     saveCount: 1200,
   }
 ];
+
+
+    
