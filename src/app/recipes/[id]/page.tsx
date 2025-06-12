@@ -12,7 +12,7 @@ import { AppHeader } from '@/components/layout/header'; // Import AppHeader
 
 async function getRecipe(id: string): Promise<Recipe | null> {
   // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:9002
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'; // Updated fallback
   const fetchUrl = `${baseUrl}/api/recipes?id=${id}`;
   try {
     const response = await fetch(fetchUrl, { cache: 'no-store' }); 
@@ -22,7 +22,12 @@ async function getRecipe(id: string): Promise<Recipe | null> {
         return null; 
       }
       const errorText = await response.text();
-      console.error(`Failed to fetch recipe ${id}. Status: ${response.status}. URL: ${fetchUrl}. Response Body: ${errorText.substring(0, 500)}`);
+      // Log more detailed error information including the URL and parts of the response
+      let errorDetails = `Failed to fetch recipe ${id}. Status: ${response.status}. URL: ${fetchUrl}.`;
+      if (errorText) {
+        errorDetails += ` Response Body (first 500 chars): ${errorText.substring(0, 500)}`;
+      }
+      console.error(errorDetails);
       return null;
     }
     const recipe: Recipe = await response.json();
@@ -248,5 +253,3 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     description: recipe.description || `View the recipe for ${recipe.name} on CalSnap.`,
   };
 }
-
-    
