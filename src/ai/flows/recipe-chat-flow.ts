@@ -17,11 +17,8 @@ import type { Recipe } from '@/types'; // Using our main Recipe type
 const RecipeShortSchema = z.object({
   id: z.string(),
   name: z.string(),
-  cuisine: z.string().optional(),
   description: z.string().optional().describe("A brief summary of the recipe."),
-  // Only include a few key ingredients to keep the context for LLM concise
-  keyIngredients: z.array(z.string()).describe("A few (2-3) primary ingredients of the recipe.").optional(),
-  // Calories are often not available from public APIs like TheMealDB
+  keyIngredients: z.array(z.string()).optional().describe("A few (2-3) primary ingredients of the recipe.").optional(),
   calories: z.number().optional().describe("Estimated calories per serving, if available."), 
   dietaryRestrictions: z.array(z.string()).optional().describe("Dietary tags like Vegan, Gluten-Free etc."),
 });
@@ -31,9 +28,9 @@ type RecipeShort = z.infer<typeof RecipeShortSchema>;
 const searchRecipesTool = ai.defineTool(
   {
     name: 'searchRecipesTool',
-    description: 'Searches an external recipe database for recipes matching a query. Use this to find recipes by name, primary ingredient, or cuisine. Prioritize name matches.',
+    description: "Searches an external recipe database (Spoonacular) for recipes matching a query. Use this to find recipes by name, primary ingredient, or broad dietary keywords (e.g., vegan, gluten-free). Prioritize name matches.",
     inputSchema: z.object({
-      searchTerm: z.string().describe('The user\'s query. This could be a recipe name, a main ingredient, or a cuisine type (e.g., Italian, Mexican).'),
+      searchTerm: z.string().describe('The user\'s query. This could be a recipe name, a main ingredient, or a general type like "vegan pasta".'),
     }),
     outputSchema: z.object({
       foundRecipes: z.array(RecipeShortSchema).describe('A list of recipes matching the search term. Returns up to 5 relevant recipes.'),
@@ -42,10 +39,10 @@ const searchRecipesTool = ai.defineTool(
   },
   async ({ searchTerm }) => {
     const results: RecipeShort[] = [];
-    let searchSummary = `Searched for recipes related to "${searchTerm}". `;
+    let searchSummary = `Searched for recipes related to "${searchTerm}" using Spoonacular. `;
 
     try {
-      // Fetch from our own API endpoint, which proxies to TheMealDB
+      // Fetch from our own API endpoint, which proxies to Spoonacular
       const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error(`API call failed with status: ${response.status}`);
@@ -56,9 +53,8 @@ const searchRecipesTool = ai.defineTool(
         results.push({
           id: recipeData.id,
           name: recipeData.name,
-          cuisine: recipeData.cuisine,
           description: recipeData.description ? recipeData.description.substring(0,150) + (recipeData.description.length > 150 ? "..." : "") : "A recipe for " + recipeData.name,
-          calories: recipeData.calories, // Will likely be undefined
+          calories: recipeData.calories,
           dietaryRestrictions: recipeData.dietaryRestrictions,
           keyIngredients: recipeData.ingredients.slice(0,3), // Take first 3 ingredients as key ingredients
         });
@@ -71,7 +67,7 @@ const searchRecipesTool = ai.defineTool(
       }
 
     } catch (e) {
-      console.error("Error in searchRecipesTool while fetching from API:", e);
+      console.error("Error in searchRecipesTool while fetching from Spoonacular via API:", e);
       searchSummary += "An error occurred while searching for recipes from the external API.";
        if (e instanceof Error) {
         searchSummary += ` Details: ${e.message}`;
@@ -110,7 +106,7 @@ const recipeChatPrompt = ai.definePrompt({
   prompt: `You are CalSnap AI, a friendly and helpful assistant for the CalSnap app.
 Your goal is to assist users with their questions about recipes, ingredients, calories, and meal planning.
 Always use the 'searchRecipesTool' to find specific recipes when the user asks for them or describes what they are looking for (e.g., "any vegan pasta recipes?", "how many calories in carbonara?", "ingredients for lentil soup").
-When presenting recipes from the tool, briefly mention the name, cuisine, and maybe 1-2 key ingredients or its description. If calories are available, mention them (but state they are estimates if so). Often, calorie data per recipe won't be available directly, in which case do not mention it.
+When presenting recipes from the tool, briefly mention the name, and maybe 1-2 key ingredients or its description. If calories are available, mention them (but state they are estimates if so). If dietary tags are available, mention key ones.
 If a user asks about general calorie information for a food item not in a recipe, you can provide a general estimate but remind them that the CalSnap AI Meal Analyzer (photo upload) is best for specific meal estimations.
 If no recipes are found by the tool, say so politely based on the tool's summary and perhaps offer to search for something else or suggest they broaden their search.
 Keep your responses concise and conversational.

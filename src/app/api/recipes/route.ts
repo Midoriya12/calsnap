@@ -2,43 +2,51 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import type { Recipe } from '@/types';
 
-// Helper function to transform TheMealDB API response to our Recipe type
-function transformMealDBRecipe(meal: any): Recipe {
-  const ingredients: string[] = [];
-  for (let i = 1; i <= 20; i++) {
-    const ingredient = meal[`strIngredient${i}`];
-    const measure = meal[`strMeasure${i}`];
-    if (ingredient && ingredient.trim() !== "") {
-      ingredients.push(`${measure ? measure.trim() : ''} ${ingredient.trim()}`.trim());
-    }
-  }
-
-  const instructions = meal.strInstructions
-    ? meal.strInstructions.split('\n').map((s: string) => s.trim()).filter((s: string) => s !== '')
-    : [];
+// Helper function to transform Spoonacular API response to our Recipe type
+function transformSpoonacularRecipe(spoonacularRecipe: any): Recipe {
+  const ingredients = spoonacularRecipe.extendedIngredients?.map((ing: any) => ing.original) || [];
   
-  const dietaryRestrictions = meal.strTags 
-    ? meal.strTags.split(',').map((tag: string) => tag.trim()) 
-    : [];
-  if (meal.strCategory && !dietaryRestrictions.includes(meal.strCategory)) {
-    // dietaryRestrictions.push(meal.strCategory); // Optionally add category as a tag
+  let instructions: string[] = [];
+  if (spoonacularRecipe.analyzedInstructions && spoonacularRecipe.analyzedInstructions.length > 0) {
+    spoonacularRecipe.analyzedInstructions.forEach((instrGroup: any) => {
+      instrGroup.steps.forEach((step: any) => {
+        instructions.push(step.step);
+      });
+    });
+  } else if (spoonacularRecipe.instructions) { // Fallback for plain text instructions
+    instructions = spoonacularRecipe.instructions.split('\n').filter((s: string) => s.trim() !== '');
   }
 
+  const dietaryRestrictions: string[] = spoonacularRecipe.diets || [];
+  if (spoonacularRecipe.vegetarian && !dietaryRestrictions.includes('Vegetarian')) dietaryRestrictions.push('Vegetarian');
+  if (spoonacularRecipe.vegan && !dietaryRestrictions.includes('Vegan')) dietaryRestrictions.push('Vegan');
+  if (spoonacularRecipe.glutenFree && !dietaryRestrictions.includes('Gluten-Free')) dietaryRestrictions.push('Gluten-Free');
+  if (spoonacularRecipe.dairyFree && !dietaryRestrictions.includes('Dairy-Free')) dietaryRestrictions.push('Dairy-Free');
+
+  let calories;
+  if (spoonacularRecipe.nutrition?.nutrients) {
+    const calNutrient = spoonacularRecipe.nutrition.nutrients.find((n: any) => n.name === 'Calories');
+    if (calNutrient) calories = Math.round(calNutrient.amount);
+  }
+  
+  // Basic HTML tag removal for summary/description
+  const description = spoonacularRecipe.summary ? spoonacularRecipe.summary.replace(/<[^>]*>?/gm, '').substring(0, 250) + (spoonacularRecipe.summary.length > 250 ? '...' : '') : `A recipe for ${spoonacularRecipe.title}.`;
 
   return {
-    id: meal.idMeal,
-    name: meal.strMeal,
-    imageUrl: meal.strMealThumb,
-    cuisine: meal.strArea || meal.strCategory || 'Unknown',
+    id: spoonacularRecipe.id.toString(),
+    name: spoonacularRecipe.title,
+    imageUrl: spoonacularRecipe.image || 'https://placehold.co/600x400.png', // Fallback image
+    cuisine: spoonacularRecipe.cuisines?.join(', ') || spoonacularRecipe.dishTypes?.join(', ') || 'General',
     ingredients,
     instructions,
-    dietaryRestrictions,
-    calories: undefined, // TheMealDB does not provide this
-    description: meal.strInstructions ? meal.strInstructions.substring(0, 150) + (meal.strInstructions.length > 150 ? '...' : '') : `A delicious ${meal.strMeal} dish.`,
-    preparationTime: 'N/A', // TheMealDB does not provide this
-    servings: 'N/A', // TheMealDB does not provide this
-    youtubeUrl: meal.strYoutube,
-    sourceUrl: meal.strSource,
+    dietaryRestrictions: [...new Set(dietaryRestrictions)], // Remove duplicates
+    calories,
+    description,
+    preparationTime: spoonacularRecipe.readyInMinutes ? `${spoonacularRecipe.readyInMinutes} minutes` : 'N/A',
+    servings: spoonacularRecipe.servings || 0,
+    sourceUrl: spoonacularRecipe.sourceUrl || spoonacularRecipe.spoonacularSourceUrl,
+    viewCount: spoonacularRecipe.aggregateLikes || 0, // Using likes as a proxy for views
+    saveCount: spoonacularRecipe.healthScore || 0, // Using health score as a proxy for saves
   };
 }
 
@@ -46,48 +54,56 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const recipeId = searchParams.get('id');
   const searchTerm = searchParams.get('search');
-  const listByLetter = searchParams.get('letter') || 'b'; // Default to letter 'b' for a general list
+  const apiKey = process.env.SPOONACULAR_API_KEY;
 
-  const THEMEALDB_API_BASE = 'https://www.themealdb.com/api/json/v1/1';
+  if (!apiKey) {
+    console.error("SPOONACULAR_API_KEY is not set in environment variables.");
+    return NextResponse.json({ message: "Server configuration error: Missing Spoonacular API key." }, { status: 500 });
+  }
+
+  const SPOONACULAR_API_BASE = 'https://api.spoonacular.com/recipes';
+  const defaultParams = `apiKey=${apiKey}&number=12&addRecipeInformation=true&fillIngredients=true`; // Fetch more info for list view
 
   try {
     let apiUrl = '';
+    let isSearchById = false;
+
     if (recipeId) {
-      apiUrl = `${THEMEALDB_API_BASE}/lookup.php?i=${recipeId}`;
+      apiUrl = `${SPOONACULAR_API_BASE}/${recipeId}/information?apiKey=${apiKey}&includeNutrition=true`;
+      isSearchById = true;
     } else if (searchTerm) {
-      apiUrl = `${THEMEALDB_API_BASE}/search.php?s=${encodeURIComponent(searchTerm)}`;
+      apiUrl = `${SPOONACULAR_API_BASE}/complexSearch?query=${encodeURIComponent(searchTerm)}&${defaultParams}`;
     } else {
-      apiUrl = `${THEMEALDB_API_BASE}/search.php?f=${listByLetter}`; // Fetch by first letter for catalog
+      // Default: fetch some popular/generic recipes (e.g., pasta)
+      apiUrl = `${SPOONACULAR_API_BASE}/complexSearch?query=popular&${defaultParams}`;
     }
 
-    const response = await fetch(apiUrl, { cache: 'no-store' }); // Disable caching for fresh data
+    const response = await fetch(apiUrl, { cache: 'no-store' });
     if (!response.ok) {
-      console.error(`TheMealDB API error: ${response.status} ${response.statusText}`);
-      const errorBody = await response.text();
-      console.error("TheMealDB API error body:", errorBody);
-      return NextResponse.json({ message: `Failed to fetch data from TheMealDB API. Status: ${response.status}` }, { status: response.status });
+      const errorBody = await response.json().catch(() => ({ message: `Spoonacular API error: ${response.status} ${response.statusText}`}));
+      console.error(`Spoonacular API error: ${response.status}`, errorBody);
+      return NextResponse.json({ message: errorBody.message || `Failed to fetch data from Spoonacular API. Status: ${response.status}` }, { status: response.status });
     }
 
     const data = await response.json();
 
-    if (recipeId) {
-      if (data.meals && data.meals.length > 0) {
-        const transformedRecipe = transformMealDBRecipe(data.meals[0]);
+    if (isSearchById) {
+      if (data) {
+        const transformedRecipe = transformSpoonacularRecipe(data);
         return NextResponse.json<Recipe>(transformedRecipe, { status: 200 });
       } else {
         return NextResponse.json({ message: `Recipe with id ${recipeId} not found` }, { status: 404 });
       }
-    } else { // Handles both search and list by letter
-      if (data.meals) {
-        const transformedRecipes = data.meals.map(transformMealDBRecipe);
+    } else { // Handles search and default list
+      if (data.results && data.results.length > 0) {
+        const transformedRecipes = data.results.map(transformSpoonacularRecipe);
         return NextResponse.json<Recipe[]>(transformedRecipes, { status: 200 });
       } else {
-        // For search, "null" meals means no results. For letter, it might also mean no results.
         return NextResponse.json<Recipe[]>([], { status: 200 }); // Return empty array for no results
       }
     }
   } catch (error) {
-    console.error("Failed to fetch recipes from TheMealDB:", error);
+    console.error("Failed to fetch recipes from Spoonacular:", error);
     const message = error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json({ message: `Failed to fetch recipes: ${message}` }, { status: 500 });
   }

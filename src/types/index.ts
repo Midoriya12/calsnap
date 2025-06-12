@@ -1,28 +1,28 @@
 
 export interface Recipe {
-  id: string;
-  name: string;
-  imageUrl: string;
-  cuisine: string; // From strArea or strCategory
-  ingredients: string[]; // Parsed from strIngredientX and strMeasureX
-  instructions: string[]; // Parsed from strInstructions
-  dietaryRestrictions: string[]; // Parsed from strTags, or inferred if possible
-  calories?: number; // Usually not available from TheMealDB
-  description?: string; // Can be from strInstructions or a short summary
-  preparationTime: string; // Typically "N/A" as not provided by TheMealDB
-  servings: string; // Typically "N/A" or a default, as not provided by TheMealDB
-  viewCount?: number; // Not available from TheMealDB
-  saveCount?: number; // Not available from TheMealDB
-  youtubeUrl?: string; // From strYoutube
-  sourceUrl?: string; // From strSource
+  id: string; // Spoonacular's recipe ID
+  name: string; // from title
+  imageUrl: string; // from image
+  cuisine: string; // Best effort from dishTypes or diets, or "General"
+  ingredients: string[]; // Parsed from extendedIngredients (original string)
+  instructions: string[]; // Parsed from analyzedInstructions
+  dietaryRestrictions: string[]; // From diets, vegetarian, vegan, glutenFree, dairyFree flags
+  calories?: number; // From nutrition.nutrients where name is "Calories"
+  description?: string; // From summary (plain text version)
+  preparationTime: string; // From readyInMinutes (total time)
+  servings: number; // From servings
+  viewCount?: number; // Not directly available, can use Spoonacular's score or likes as proxy if needed
+  saveCount?: number; // Not directly available
+  youtubeUrl?: string; // Not directly available from Spoonacular's recipe info endpoint
+  sourceUrl?: string; // From sourceUrl or spoonacularSourceUrl
 }
 
 export interface DetailedRecipe {
   name: string;
   description: string;
   preparationTime: string;
-  cookingTime: string;
-  servings: string;
+  cookingTime: string; // Spoonacular provides 'readyInMinutes', might not split well.
+  servings: string; // Will be number from Spoonacular, convert to string
   ingredientsList: string[];
   instructionsList: string[];
 }

@@ -19,10 +19,22 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'www.themealdb.com',
+        hostname: 'www.themealdb.com', // Keep for now in case of any old references
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'spoonacular.com', // Add Spoonacular domain
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.spoonacular.com', // Add Spoonacular image CDN domain
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
