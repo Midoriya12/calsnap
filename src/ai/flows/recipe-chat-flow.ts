@@ -40,8 +40,8 @@ const searchRecipesTool = ai.defineTool(
   async ({ searchTerm }) => {
     const results: RecipeShort[] = [];
     let searchSummary = `Searched for recipes related to "${searchTerm}" using TheMealDB. `;
-    // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:9002 for dev consistency
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:3000 for dev consistency
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Updated fallback to 3000
 
     try {
       // Fetch from our own API endpoint, which proxies to TheMealDB
@@ -141,3 +141,4 @@ const recipeChatFlow = ai.defineFlow(
     return output;
   }
 );
+
