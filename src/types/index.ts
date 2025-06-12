@@ -3,16 +3,18 @@ export interface Recipe {
   id: string;
   name: string;
   imageUrl: string;
-  cuisine: string;
-  ingredients: string[];
-  instructions: string[];
-  dietaryRestrictions: string[];
-  calories?: number;
-  description: string;
-  preparationTime: string;
-  servings: number;
-  viewCount?: number;
-  saveCount?: number;
+  cuisine: string; // From strArea or strCategory
+  ingredients: string[]; // Parsed from strIngredientX and strMeasureX
+  instructions: string[]; // Parsed from strInstructions
+  dietaryRestrictions: string[]; // Parsed from strTags, or inferred if possible
+  calories?: number; // Usually not available from TheMealDB
+  description?: string; // Can be from strInstructions or a short summary
+  preparationTime: string; // Typically "N/A" as not provided by TheMealDB
+  servings: string; // Typically "N/A" or a default, as not provided by TheMealDB
+  viewCount?: number; // Not available from TheMealDB
+  saveCount?: number; // Not available from TheMealDB
+  youtubeUrl?: string; // From strYoutube
+  sourceUrl?: string; // From strSource
 }
 
 export interface DetailedRecipe {
