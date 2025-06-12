@@ -1,28 +1,28 @@
 
 export interface Recipe {
-  id: string; // Spoonacular's recipe ID
-  name: string; // from title
-  imageUrl: string; // from image
-  cuisine: string; // Best effort from dishTypes or diets, or "General"
-  ingredients: string[]; // Parsed from extendedIngredients (original string)
-  instructions: string[]; // Parsed from analyzedInstructions
-  dietaryRestrictions: string[]; // From diets, vegetarian, vegan, glutenFree, dairyFree flags
-  calories?: number; // From nutrition.nutrients where name is "Calories"
-  description?: string; // From summary (plain text version)
-  preparationTime: string; // From readyInMinutes (total time)
-  servings: number; // From servings
-  viewCount?: number; // Not directly available, can use Spoonacular's score or likes as proxy if needed
-  saveCount?: number; // Not directly available
-  youtubeUrl?: string; // Not directly available from Spoonacular's recipe info endpoint
-  sourceUrl?: string; // From sourceUrl or spoonacularSourceUrl
+  id: string; // TheMealDB's recipe ID (idMeal)
+  name: string; // from strMeal
+  imageUrl: string; // from strMealThumb
+  cuisine: string; // from strArea
+  ingredients: string[]; // Parsed from strIngredient1-20 and strMeasure1-20
+  instructions: string[]; // Parsed from strInstructions (split by newline)
+  dietaryRestrictions: string[]; // Primarily from strTags, potentially strCategory
+  calories?: number; // Not directly available from TheMealDB, AI will estimate
+  description?: string; // Not directly available, maybe first few lines of instructions or a generic one.
+  preparationTime: string; // Not directly available, set to "N/A"
+  servings: string; // Not directly available, set to "N/A"
+  viewCount?: number; // Not available
+  saveCount?: number; // Not available
+  youtubeUrl?: string; // from strYoutube
+  sourceUrl?: string; // from strSource
 }
 
 export interface DetailedRecipe {
   name: string;
   description: string;
   preparationTime: string;
-  cookingTime: string; // Spoonacular provides 'readyInMinutes', might not split well.
-  servings: string; // Will be number from Spoonacular, convert to string
+  cookingTime: string;
+  servings: string;
   ingredientsList: string[];
   instructionsList: string[];
 }
