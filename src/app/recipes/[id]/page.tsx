@@ -1,5 +1,4 @@
 
-import { mockRecipes } from '@/lib/mock-data';
 import type { Recipe } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,12 +6,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle, Eye, Bookmark } from 'lucide-react';
+import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle, Eye, Bookmark, Youtube, Link as LinkIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AppHeader } from '@/components/layout/header'; // Import AppHeader
 
 async function getRecipe(id: string): Promise<Recipe | null> {
-  const recipe = mockRecipes.find(recipe => recipe.id === id);
-  return recipe || null;
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?id=${id}`, { cache: 'no-store' });
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // Recipe not found
+      }
+      throw new Error(`Failed to fetch recipe: ${response.status}`);
+    }
+    const recipe: Recipe = await response.json();
+    return recipe;
+  } catch (error) {
+    console.error("Error fetching recipe by ID:", error);
+    return null;
+  }
 }
 
 export default async function RecipeDetailsPage({ params }: { params: { id: string } }) {
@@ -20,19 +32,25 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
 
   if (!recipe) {
     return (
-      <div className="flex flex-col flex-grow items-center justify-center p-4 md:p-6 lg:p-8"> {/* Adjusted */}
-        <Alert variant="destructive" className="w-full max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Recipe Not Found</AlertTitle>
-          <AlertDescription>
-            The recipe you are looking for does not exist or may have been removed.
-          </AlertDescription>
-        </Alert>
-        <Button asChild variant="outline" className="mt-6">
-          <Link href="/recipes"> 
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
-          </Link>
-        </Button>
+      <div className="flex flex-col flex-grow">
+        <AppHeader />
+        <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
+          <Alert variant="destructive" className="w-full max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Recipe Not Found</AlertTitle>
+            <AlertDescription>
+              The recipe you are looking for (ID: {params.id}) does not exist or could not be loaded. It might have been removed or the ID is incorrect.
+            </AlertDescription>
+          </Alert>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/recipes">
+              <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
+            </Link>
+          </Button>
+        </main>
+        <footer className="text-center text-muted-foreground text-sm py-8 mt-auto border-t">
+          <p>&copy; {new Date().getFullYear()} CalSnap. Your friendly meal companion.</p>
+        </footer>
       </div>
     );
   }
@@ -40,34 +58,34 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
   const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
-    <div className="flex flex-col flex-grow text-foreground"> {/* Adjusted */}
-      <header className="py-4 px-6 shadow-md bg-card sticky top-0 z-50">
-        <div className="container mx-auto">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/recipes"> 
-              <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
-            </Link>
-          </Button>
-        </div>
-      </header>
-
+    <div className="flex flex-col flex-grow text-foreground">
+      <AppHeader /> {/* Use AppHeader here */}
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
+        <div className="mb-6">
+            <Button asChild variant="outline" size="sm">
+                <Link href="/recipes">
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
+                </Link>
+            </Button>
+        </div>
         <Card className="w-full shadow-lg">
           <CardHeader className="p-0">
             <div className="relative w-full h-64 md:h-96">
               <Image
-                src={recipe.imageUrl}
+                src={recipe.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={recipe.name}
                 layout="fill"
                 objectFit="cover"
                 className="rounded-t-lg"
-                data-ai-hint={aiHint} 
+                data-ai-hint={aiHint}
               />
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <CardTitle className="text-3xl md:text-4xl font-headline text-primary">{recipe.name}</CardTitle>
-            <CardDescription className="text-lg text-muted-foreground">{recipe.description}</CardDescription>
+            {recipe.description && (
+                <CardDescription className="text-lg text-muted-foreground">{recipe.description}</CardDescription>
+            )}
 
             <Separator />
 
@@ -75,17 +93,17 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
               <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
                 <Clock size={20} className="text-accent mb-1" />
                 <span className="font-semibold">Prep Time</span>
-                <span>{recipe.preparationTime}</span>
+                <span>{recipe.preparationTime || 'N/A'}</span>
               </div>
               <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
                 <Users size={20} className="text-accent mb-1" />
                 <span className="font-semibold">Servings</span>
-                <span>{recipe.servings}</span>
+                <span>{recipe.servings || 'N/A'}</span>
               </div>
               <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
                 <Utensils size={20} className="text-accent mb-1" />
                 <span className="font-semibold">Cuisine</span>
-                <span>{recipe.cuisine}</span>
+                <span>{recipe.cuisine || 'N/A'}</span>
               </div>
               {recipe.calories && (
                 <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
@@ -110,7 +128,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
               )}
             </div>
 
-            {recipe.dietaryRestrictions.length > 0 && (
+            {recipe.dietaryRestrictions && recipe.dietaryRestrictions.length > 0 && (
               <div>
                 <h3 className="text-xl font-semibold mb-2 text-primary">Dietary Information</h3>
                 <div className="flex flex-wrap gap-2">
@@ -127,11 +145,15 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
               <h3 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
                 <ListChecks /> Ingredients
               </h3>
-              <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
-                {recipe.ingredients.map((ingredient, index) => (
-                  <li key={index}>{ingredient}</li>
-                ))}
-              </ul>
+              {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <li key={index}>{ingredient}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">No ingredients listed.</p>
+              )}
             </div>
 
             <Separator />
@@ -140,23 +162,57 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
               <h3 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
                 <ListChecks /> Instructions
               </h3>
-              <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
-                {recipe.instructions.map((step, index) => (
-                  <li key={index}>{step}</li>
-                ))}
-              </ol>
+              {recipe.instructions && recipe.instructions.length > 0 ? (
+                <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
+                  {recipe.instructions.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-muted-foreground">No instructions provided.</p>
+              )}
             </div>
+
+            {(recipe.youtubeUrl || recipe.sourceUrl) && <Separator />}
+
+            <div className="space-y-3">
+              {recipe.youtubeUrl && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-2 flex items-center gap-2 text-primary">
+                    <Youtube /> Watch Video
+                  </h3>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={recipe.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                      View on YouTube
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              {recipe.sourceUrl && (
+                 <div>
+                  <h3 className="text-xl font-semibold mb-2 flex items-center gap-2 text-primary">
+                    <LinkIcon /> Original Source
+                  </h3>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer">
+                      View Original Recipe
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+
           </CardContent>
           <CardFooter className="p-6">
              <Button asChild variant="default" className="w-full md:w-auto">
-                <Link href="/recipes"> 
+                <Link href="/recipes">
                     <ChevronLeft className="mr-2 h-4 w-4" /> Return to Catalog
                 </Link>
             </Button>
           </CardFooter>
         </Card>
       </main>
-      <footer className="text-center text-muted-foreground text-sm py-8 mt-8 border-t">
+      <footer className="text-center text-muted-foreground text-sm py-8 mt-auto border-t">
         <p>&copy; {new Date().getFullYear()} CalSnap. Your friendly meal companion.</p>
       </footer>
     </div>
@@ -167,11 +223,12 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   const recipe = await getRecipe(params.id);
   if (!recipe) {
     return {
-      title: 'Recipe Not Found',
+      title: 'Recipe Not Found | CalSnap',
+      description: 'The recipe you are looking for could not be found.',
     };
   }
   return {
     title: `${recipe.name} | CalSnap Recipe`,
-    description: recipe.description,
+    description: recipe.description || `View the recipe for ${recipe.name} on CalSnap.`,
   };
 }
