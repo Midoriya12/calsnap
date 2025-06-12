@@ -36,7 +36,7 @@ export default function CalSnapPage() {
 
   if (authLoading || isLoadingPage) {
      return (
-      <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex flex-col flex-grow"> {/* Adjusted: removed min-h-screen, bg-background is on body now */}
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -47,7 +47,7 @@ export default function CalSnapPage() {
   
   if (!user) {
     return (
-       <div className="flex flex-col min-h-screen bg-background">
+       <div className="flex flex-col flex-grow"> {/* Adjusted: removed min-h-screen, bg-background is on body now */}
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -59,7 +59,7 @@ export default function CalSnapPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning={true}>
+    <div className="flex flex-col flex-grow" suppressHydrationWarning={true}> {/* Adjusted: removed min-h-screen, bg-background is on body now */}
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         <section id="ai-analyzer" aria-labelledby="ai-analyzer-heading">

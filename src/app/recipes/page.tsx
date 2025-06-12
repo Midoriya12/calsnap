@@ -26,7 +26,7 @@ export default function RecipesPage() {
 
   if (authLoading || isLoadingPage) {
     return (
-      <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex flex-col flex-grow"> {/* Adjusted */}
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -37,7 +37,7 @@ export default function RecipesPage() {
 
   if (!user) {
      return (
-       <div className="flex flex-col min-h-screen bg-background">
+       <div className="flex flex-col flex-grow"> {/* Adjusted */}
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -48,7 +48,7 @@ export default function RecipesPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex flex-col flex-grow"> {/* Adjusted */}
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         <section id="recipe-catalog" aria-labelledby="recipe-catalog-heading">

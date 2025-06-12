@@ -61,7 +61,7 @@ export default function SavedMealsPage() {
 
   if (authLoading || (!user && !authLoading)) { // Show loader if auth is loading or redirect is imminent
     return (
-      <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex flex-col flex-grow"> {/* Adjusted */}
         <AppHeader />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -71,7 +71,7 @@ export default function SavedMealsPage() {
   }
   
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex flex-col flex-grow"> {/* Adjusted */}
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex items-center justify-between mb-8">

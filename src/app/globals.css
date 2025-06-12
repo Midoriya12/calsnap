@@ -2,11 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
+  html,
+  body {
+    @apply h-full; /* Ensure html and body take full viewport height */
+  }
+
+  body {
+    @apply flex flex-col bg-background text-foreground; /* Make body a flex column and apply base styles */
+    /* font-family is applied via className in layout.tsx using tailwind.config.ts */
+  }
+
   :root {
     --background: 60 56% 91%; /* Light Beige */
     --foreground: 20 10% 20%; /* Dark Gray for readability */
@@ -105,7 +111,5 @@ body {
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+  /* body styling is now handled above within the first @layer base */
 }

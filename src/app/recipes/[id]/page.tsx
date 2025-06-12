@@ -20,7 +20,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
 
   if (!recipe) {
     return (
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col flex-grow items-center justify-center p-4 md:p-6 lg:p-8"> {/* Adjusted */}
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Recipe Not Found</AlertTitle>
@@ -29,7 +29,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
           </AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="mt-6">
-          <Link href="/recipes"> {/* Changed link to /recipes */}
+          <Link href="/recipes"> 
             <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
           </Link>
         </Button>
@@ -40,11 +40,11 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
   const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="flex flex-col flex-grow text-foreground"> {/* Adjusted */}
       <header className="py-4 px-6 shadow-md bg-card sticky top-0 z-50">
         <div className="container mx-auto">
           <Button asChild variant="outline" size="sm">
-            <Link href="/recipes"> {/* Changed link to /recipes */}
+            <Link href="/recipes"> 
               <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
             </Link>
           </Button>
@@ -149,7 +149,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
           </CardContent>
           <CardFooter className="p-6">
              <Button asChild variant="default" className="w-full md:w-auto">
-                <Link href="/recipes"> {/* Changed link to /recipes */}
+                <Link href="/recipes"> 
                     <ChevronLeft className="mr-2 h-4 w-4" /> Return to Catalog
                 </Link>
             </Button>
