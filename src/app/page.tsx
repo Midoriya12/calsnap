@@ -16,16 +16,14 @@ export default function CalSnapPage() {
   const router = useRouter();
   const [aiEstimation, setAiEstimation] = useState<AIEstimation | null>(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | undefined>(undefined);
-  const [isLoadingPage, setIsLoadingPage] = useState(true); // Manages loading state for this page specifically
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
   useEffect(() => {
-    // This effect handles redirection once auth state is known.
-    // AuthProvider handles the initial app-wide loading screen.
-    if (!authLoading) { // Only proceed if AuthProvider is done loading
+    if (!authLoading) {
       if (!user) {
         router.push('/login?redirect=/');
       } else {
-        setIsLoadingPage(false); // User is authenticated and AuthProvider is done, stop page-specific loading
+        setIsLoadingPage(false);
       }
     }
   }, [user, authLoading, router]);
@@ -36,7 +34,6 @@ export default function CalSnapPage() {
     setUploadedImagePreview(imagePreview);
   };
 
-  // Show loader if AuthProvider is still loading OR if this page is loading (e.g., waiting for auth check to redirect)
   if (authLoading || isLoadingPage) {
      return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -48,8 +45,6 @@ export default function CalSnapPage() {
     );
   }
   
-  // If, after all loading, there's still no user, it implies a redirect should occur or is in progress.
-  // This state might be brief or might indicate an issue if redirection doesn't happen.
   if (!user) {
     return (
        <div className="flex flex-col min-h-screen bg-background">
@@ -93,12 +88,11 @@ export default function CalSnapPage() {
             )}
           </div>
         </section>
-
-        <footer className="text-center text-muted-foreground text-sm py-8 border-t mt-auto">
-          <p>&copy; {new Date().getFullYear()} CalSnap. All rights reserved.</p>
-          <p>Meal data is AI-estimated and for informational purposes only. Consult a nutritionist for dietary advice.</p>
-        </footer>
       </main>
+      <footer className="text-center text-muted-foreground text-sm py-8 border-t">
+        <p>&copy; {new Date().getFullYear()} CalSnap. All rights reserved.</p>
+        <p>Meal data is AI-estimated and for informational purposes only. Consult a nutritionist for dietary advice.</p>
+      </footer>
     </div>
   );
 }

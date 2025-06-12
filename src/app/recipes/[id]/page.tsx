@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle, Eye, Bookmark } from 'lucide-react'; // Added Eye, Bookmark
+import { Clock, Users, Flame, Utensils, ListChecks, ChevronLeft, AlertCircle, Eye, Bookmark } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 async function getRecipe(id: string): Promise<Recipe | null> {
@@ -29,8 +29,8 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
           </AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="mt-6">
-          <Link href="/">
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Catalog
+          <Link href="/recipes"> {/* Changed link to /recipes */}
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
           </Link>
         </Button>
       </div>
@@ -40,18 +40,18 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
   const aiHint = recipe.name.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="py-4 px-6 shadow-md bg-card sticky top-0 z-50">
         <div className="container mx-auto">
           <Button asChild variant="outline" size="sm">
-            <Link href="/">
+            <Link href="/recipes"> {/* Changed link to /recipes */}
               <ChevronLeft className="mr-2 h-4 w-4" /> Back to Recipe Catalog
             </Link>
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto p-4 md:p-6 lg:p-8">
+      <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="w-full shadow-lg">
           <CardHeader className="p-0">
             <div className="relative w-full h-64 md:h-96">
@@ -149,7 +149,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
           </CardContent>
           <CardFooter className="p-6">
              <Button asChild variant="default" className="w-full md:w-auto">
-                <Link href="/">
+                <Link href="/recipes"> {/* Changed link to /recipes */}
                     <ChevronLeft className="mr-2 h-4 w-4" /> Return to Catalog
                 </Link>
             </Button>

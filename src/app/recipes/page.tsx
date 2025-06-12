@@ -60,10 +60,10 @@ export default function RecipesPage() {
           </div>
           <RecipeCatalog />
         </section>
-        <footer className="text-center text-muted-foreground text-sm py-8 border-t mt-auto">
-          <p>&copy; {new Date().getFullYear()} CalSnap. Your friendly meal companion.</p>
-        </footer>
       </main>
+      <footer className="text-center text-muted-foreground text-sm py-8 border-t">
+        <p>&copy; {new Date().getFullYear()} CalSnap. Your friendly meal companion.</p>
+      </footer>
     </div>
   );
 }
