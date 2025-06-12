@@ -43,10 +43,19 @@ export function LoginForm() {
       router.push('/'); 
       router.refresh(); 
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Login error:', error); // Keep console log for debugging
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled. Please contact support.';
+      } else if (error.message) {
+        // Fallback to Firebase's message for other specific errors if it's more descriptive
+        errorMessage = error.message;
+      }
       toast({
         title: 'Login Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
