@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'; // Import sendEmailVerification
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,10 +43,25 @@ export function SignupForm() {
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, data.email, data.password);
-      toast({ title: 'Signup Successful', description: 'Welcome! You can now log in.' });
-      router.push('/login'); 
-      router.refresh();
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      // Send verification email
+      if (userCredential.user) {
+        await sendEmailVerification(userCredential.user);
+        toast({ 
+          title: 'Signup Successful!', 
+          description: 'Please check your email to verify your account before logging in.' 
+        });
+      } else {
+        // This case should ideally not happen if createUserWithEmailAndPassword succeeds
+        toast({ 
+          title: 'Signup Successful', 
+          description: 'User created, but verification email could not be sent automatically.' 
+        });
+      }
+      
+      // Redirect to login or a page indicating to check email
+      router.push('/login?message=verify-email'); 
+      router.refresh(); // May not be strictly necessary here but good practice after auth changes
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
