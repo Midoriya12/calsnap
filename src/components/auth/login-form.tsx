@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +24,7 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const {
@@ -39,8 +40,8 @@ export function LoginForm() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: 'Login Successful', description: "Welcome back!" });
-      router.push('/'); // Redirect to home page after login
-      router.refresh(); // Refresh to update auth state in header
+      router.push('/'); 
+      router.refresh(); 
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
@@ -53,6 +54,8 @@ export function LoginForm() {
     }
   };
 
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
@@ -61,8 +64,31 @@ export function LoginForm() {
         {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input id="password" type="password" {...register('password')} placeholder="••••••••" />
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Button variant="link" asChild className="p-0 h-auto text-xs">
+            <Link href="/forgot-password">Forgot password?</Link>
+          </Button>
+        </div>
+        <div className="relative">
+          <Input 
+            id="password" 
+            type={showPassword ? 'text' : 'password'} 
+            {...register('password')} 
+            placeholder="••••••••" 
+            className="pr-10"
+          />
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="icon" 
+            className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground hover:bg-transparent"
+            onClick={togglePasswordVisibility}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </Button>
+        </div>
         {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
