@@ -10,10 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { db } from '@/lib/firebase'; // Import Firestore
-import { collection, query, where, getDocs, limit, or } from 'firebase/firestore'; // Firestore query methods
+// import { db } from '@/lib/firebase'; // Firestore import no longer needed for mock data
+// import { collection, query, where, getDocs, limit, or } from 'firebase/firestore'; // Firestore query methods no longer needed
 import type { Recipe } from '@/types';
-
+import { mockRecipes } from '@/lib/mock-data'; // Import mockRecipes
 
 // Define a simpler schema for recipes returned by the tool to the LLM
 const RecipeShortSchema = z.object({
@@ -47,55 +47,36 @@ const searchRecipesTool = ai.defineTool(
     let searchSummary = `Searched for "${searchTerm}". `;
 
     try {
-      const recipesCollectionRef = collection(db, 'recipes');
-      // Simple name search for now. Firestore is case-sensitive.
-      // For more complex search (case-insensitive, partial match on ingredients array),
-      // a more sophisticated search solution (like Algolia or Typesense) or more complex queries/data duplication might be needed.
-      
-      // Attempt to find matches in name, cuisine, or dietaryRestrictions array
-      const nameQuery = query(recipesCollectionRef, where('name', '>=', searchTerm), where('name', '<=', searchTerm + '\uf8ff'), limit(5));
-      const cuisineQuery = query(recipesCollectionRef, where('cuisine', '==', searchTerm), limit(5)); // Exact match for cuisine for simplicity
-      const dietaryQuery = query(recipesCollectionRef, where('dietaryRestrictions', 'array-contains', searchTerm), limit(5)); // Case-sensitive array contains
+      // Search logic for mockRecipes
+      const matched = mockRecipes.filter(recipe => {
+        const nameMatch = recipe.name.toLowerCase().includes(lowerSearchTerm);
+        const cuisineMatch = recipe.cuisine.toLowerCase().includes(lowerSearchTerm);
+        const ingredientMatch = recipe.ingredients.some(ing => ing.toLowerCase().includes(lowerSearchTerm));
+        const dietaryMatch = recipe.dietaryRestrictions.some(tag => tag.toLowerCase().includes(lowerSearchTerm));
+        return nameMatch || cuisineMatch || ingredientMatch || dietaryMatch;
+      });
 
-      const [nameSnapshot, cuisineSnapshot, dietarySnapshot] = await Promise.all([
-        getDocs(nameQuery),
-        getDocs(cuisineQuery),
-        getDocs(dietaryQuery)
-      ]);
-      
-      const foundIds = new Set<string>();
-
-      const processSnapshot = (snapshot: any) => { // Using 'any' for snapshot for brevity
-        snapshot.forEach((doc: any) => {
-          if (results.length < 5 && !foundIds.has(doc.id)) {
-            const recipeData = doc.data() as Recipe;
-            results.push({
-              id: doc.id,
-              name: recipeData.name,
-              cuisine: recipeData.cuisine,
-              description: recipeData.description.substring(0, 100) + (recipeData.description.length > 100 ? '...' : ''),
-              calories: recipeData.calories,
-              dietaryRestrictions: recipeData.dietaryRestrictions,
-              keyIngredients: recipeData.ingredients.slice(0,3),
-            });
-            foundIds.add(doc.id);
-          }
+      matched.slice(0, 5).forEach(recipeData => {
+        results.push({
+          id: recipeData.id,
+          name: recipeData.name,
+          cuisine: recipeData.cuisine,
+          description: recipeData.description.substring(0, 100) + (recipeData.description.length > 100 ? '...' : ''),
+          calories: recipeData.calories,
+          dietaryRestrictions: recipeData.dietaryRestrictions,
+          keyIngredients: recipeData.ingredients.slice(0,3),
         });
-      };
-
-      processSnapshot(nameSnapshot);
-      if (results.length < 5) processSnapshot(cuisineSnapshot);
-      if (results.length < 5) processSnapshot(dietarySnapshot);
+      });
       
       if (results.length > 0) {
-        searchSummary += `Found ${results.length} relevant recipe(s) in Firestore.`;
+        searchSummary += `Found ${results.length} relevant recipe(s) in the mock data.`;
       } else {
-        searchSummary += "Found no direct matches in the Firestore recipe database for this specific term. You might try rephrasing or searching for a broader category.";
+        searchSummary += "Found no direct matches in the mock recipe data for this specific term. You might try rephrasing or searching for a broader category.";
       }
 
     } catch (e) {
-      console.error("Firestore search error in searchRecipesTool:", e);
-      searchSummary += "An error occurred while searching the recipe database.";
+      console.error("Mock data search error in searchRecipesTool:", e);
+      searchSummary += "An error occurred while searching the mock recipe data.";
     }
 
     return { foundRecipes: results.slice(0, 5), searchSummary }; // Ensure we don't exceed 5
@@ -164,3 +145,4 @@ const recipeChatFlow = ai.defineFlow(
     return output;
   }
 );
+

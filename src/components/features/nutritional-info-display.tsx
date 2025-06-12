@@ -116,10 +116,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     identifiedIngredients,
     generatedRecipe 
   } = estimation;
-
-  const currentIdentifiedIngredients = identifiedIngredients || [];
   
-  // Graceful handling for potentially missing generatedRecipe or its fields
   const currentGeneratedRecipe = generatedRecipe || {
     name: 'Recipe Not Available',
     description: 'AI could not generate a detailed recipe at this time.',
@@ -129,13 +126,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     ingredientsList: [],
     instructionsList: []
   };
-  const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
-  const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
 
 
   const handleCopyIngredients = () => {
-    if (currentGeneratedRecipe && currentRecipeIngredientsList.length > 0) {
-      const ingredientsText = currentRecipeIngredientsList.join('\n');
+    if (currentGeneratedRecipe && currentGeneratedRecipe.ingredientsList.length > 0) {
+      const ingredientsText = currentGeneratedRecipe.ingredientsList.join('\n');
       navigator.clipboard.writeText(ingredientsText)
         .then(() => {
           toast({ title: "Copied!", description: "Shopping list copied to clipboard." });
@@ -208,9 +203,9 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           <div>
             <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><ListTree className="text-accent"/> Key Ingredients (Identified in Photo)</h3>
             <p className="text-xs text-muted-foreground mb-2">Click an ingredient to see nutritional details from USDA (per 100g).</p>
-            {currentIdentifiedIngredients.length > 0 ? (
+            {identifiedIngredients && identifiedIngredients.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {currentIdentifiedIngredients.map((ingredient, index) => (
+                {identifiedIngredients.map((ingredient, index) => (
                   <Badge
                     key={`${ingredient}-${index}`}
                     variant="outline"
@@ -314,9 +309,9 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
                   <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
                     <ListChecks /> Recipe Ingredients
                   </h4>
-                  {currentRecipeIngredientsList.length > 0 ? (
+                  {currentGeneratedRecipe.ingredientsList && currentGeneratedRecipe.ingredientsList.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 pl-4 text-foreground/90">
-                      {currentRecipeIngredientsList.map((ingredient, index) => (
+                      {currentGeneratedRecipe.ingredientsList.map((ingredient, index) => (
                         <li key={`recipe-ing-${index}`}>{ingredient}</li>
                       ))}
                     </ul>
@@ -329,9 +324,9 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
                   <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-primary">
                     <ListChecks /> Recipe Instructions
                   </h4>
-                  {currentRecipeInstructionsList.length > 0 ? (
+                  {currentGeneratedRecipe.instructionsList && currentGeneratedRecipe.instructionsList.length > 0 ? (
                     <ol className="list-decimal list-inside space-y-2 pl-4 text-foreground/90">
-                      {currentRecipeInstructionsList.map((step, index) => (
+                      {currentGeneratedRecipe.instructionsList.map((step, index) => (
                         <li key={`recipe-instr-${index}`}>{step}</li>
                       ))}
                     </ol>
@@ -347,7 +342,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           </div>
 
         </CardContent>
-        {isRecipeVisible && currentGeneratedRecipe && currentRecipeIngredientsList.length > 0 && (
+        {isRecipeVisible && currentGeneratedRecipe && currentGeneratedRecipe.ingredientsList && currentGeneratedRecipe.ingredientsList.length > 0 && (
           <CardFooter className="flex-col items-start space-y-4 pt-4 border-t mt-4">
               <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
                 <ShoppingCart /> Get Ingredients for "{currentGeneratedRecipe.name}"
@@ -356,7 +351,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
               <div className="w-full space-y-2">
                 <h4 className="text-md font-medium">Shopping List:</h4>
                 <ul className="list-disc list-inside space-y-1 pl-4 text-sm text-foreground/90 bg-muted/50 p-3 rounded-md">
-                  {currentRecipeIngredientsList.map((ingredient, index) => (
+                  {currentGeneratedRecipe.ingredientsList.map((ingredient, index) => (
                     <li key={`shopping-list-${index}`}>{ingredient}</li>
                   ))}
                 </ul>
@@ -396,3 +391,4 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     </>
   );
 }
+
