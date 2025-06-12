@@ -11,19 +11,35 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppHeader } from '@/components/layout/header'; // Import AppHeader
 
 async function getRecipe(id: string): Promise<Recipe | null> {
+  const fetchUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?id=${id}`;
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?id=${id}`, { cache: 'no-store' });
+    const response = await fetch(fetchUrl, { cache: 'no-store' }); 
     if (!response.ok) {
       if (response.status === 404) {
-        return null; // Recipe not found
+        console.warn(`Recipe with ID ${id} not found (404) when fetching from ${fetchUrl}`);
+        return null; 
       }
-      throw new Error(`Failed to fetch recipe: ${response.status}`);
+      // For other errors, try to get more info, but don't assume JSON
+      const errorText = await response.text();
+      console.error(`Failed to fetch recipe ${id}. Status: ${response.status}. URL: ${fetchUrl}. Response Body: ${errorText.substring(0, 500)}`);
+      return null;
     }
     const recipe: Recipe = await response.json();
     return recipe;
-  } catch (error) {
-    console.error("Error fetching recipe by ID:", error);
-    return null;
+  } catch (error: any) {
+    // This block catches network errors (e.g., "fetch failed") or errors during response.json()
+    let errorMessage = `Error fetching recipe by ID ${id} from URL: ${fetchUrl}.`;
+    if (error instanceof Error) {
+      errorMessage += ` Message: ${error.message}.`;
+      if (error.cause) {
+        // @ts-ignore
+        errorMessage += ` Cause: ${typeof error.cause === 'string' ? error.cause : JSON.stringify(error.cause)}.`;
+      }
+    } else {
+      errorMessage += ` Unexpected error object: ${String(error)}`;
+    }
+    console.error(errorMessage, error.stack ? `\nStack: ${error.stack}`: '');
+    return null; 
   }
 }
 
@@ -37,9 +53,9 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
         <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
           <Alert variant="destructive" className="w-full max-w-md">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Recipe Not Found</AlertTitle>
+            <AlertTitle>Recipe Not Found or Error Loading</AlertTitle>
             <AlertDescription>
-              The recipe you are looking for (ID: {params.id}) does not exist or could not be loaded. It might have been removed or the ID is incorrect.
+              The recipe you are looking for (ID: {params.id}) could not be loaded. It might not exist, or there was an issue fetching its details. Please check the console logs for more information or try again later.
             </AlertDescription>
           </Alert>
           <Button asChild variant="outline" className="mt-6">
@@ -105,7 +121,7 @@ export default async function RecipeDetailsPage({ params }: { params: { id: stri
                 <span className="font-semibold">Cuisine</span>
                 <span>{recipe.cuisine || 'N/A'}</span>
               </div>
-              {recipe.calories && (
+              {recipe.calories != null && ( // Check for null or undefined explicitly
                 <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
                   <Flame size={20} className="text-accent mb-1" />
                   <span className="font-semibold">Calories</span>
@@ -232,3 +248,5 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     description: recipe.description || `View the recipe for ${recipe.name} on CalSnap.`,
   };
 }
+
+    
