@@ -32,7 +32,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   
   const { user } = useAuth();
   const { saveMeal, isLoading: isSavingMeal, error: saveMealError } = useMealStorage();
-  const { addLoggedMeal, getLoggedMealsForDate } = useDailyLog(); // Use the new hook
+  const { addLoggedMeal } = useDailyLog(); // Use the new hook
   const { toast } = useToast();
 
   if (!estimation) {
@@ -82,7 +82,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
     
     const mealDataToSave = {
-      uploadedImagePreview: uploadedImage,
+      uploadedImagePreview: uploadedImage, // For production, this should be a URL from Firebase Storage
       aiEstimation: estimation,
     };
 
@@ -114,13 +114,15 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     dishName,
     estimatedCalories,
     identifiedIngredients,
-    generatedRecipe
+    generatedRecipe 
   } = estimation;
 
   const currentIdentifiedIngredients = identifiedIngredients || [];
+  
+  // Graceful handling for potentially missing generatedRecipe or its fields
   const currentGeneratedRecipe = generatedRecipe || {
-    name: 'Recipe Details Unavailable',
-    description: 'The AI could not generate a detailed recipe at this time.',
+    name: 'Recipe Not Available',
+    description: 'AI could not generate a detailed recipe at this time.',
     preparationTime: 'N/A',
     cookingTime: 'N/A',
     servings: 'N/A',
@@ -129,6 +131,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
   };
   const currentRecipeIngredientsList = currentGeneratedRecipe.ingredientsList || [];
   const currentRecipeInstructionsList = currentGeneratedRecipe.instructionsList || [];
+
 
   const handleCopyIngredients = () => {
     if (currentGeneratedRecipe && currentRecipeIngredientsList.length > 0) {
@@ -144,12 +147,10 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
     }
   };
 
-  // Prepare initial data for LogMealForm from AI estimation
   const logMealInitialData = {
-    mealName: dishName,
-    calories: estimatedCalories,
+    mealName: dishName || "AI Analyzed Meal",
+    calories: estimatedCalories || 0,
     source: 'AI Estimation' as 'AI Estimation' | 'Manual Entry',
-    // Macronutrients are not provided by current AI for the whole meal
     protein: undefined,
     fat: undefined,
     carbs: undefined,
@@ -200,7 +201,7 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           <div>
             <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Info className="text-accent" /> Estimated Calories (Whole Meal)</h3>
             <Badge variant="secondary" className="text-lg px-3 py-1 bg-accent/20 text-accent-foreground">
-              {estimatedCalories || 0} kcal
+              {estimatedCalories ? estimatedCalories.toFixed(0) : 0} kcal
             </Badge>
           </div>
 
@@ -256,11 +257,11 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
               <Card className="mt-2 bg-muted/50 p-4">
                 <CardTitle className="text-md mb-2">Details for: <span className="font-bold text-primary">{selectedIngredientNutrition.ingredient}</span></CardTitle>
                 <ul className="text-sm space-y-1">
-                  <li><strong>Calories:</strong> {selectedIngredientNutrition.calories} kcal</li>
-                  <li><strong>Protein:</strong> {selectedIngredientNutrition.protein}</li>
-                  <li><strong>Fat:</strong> {selectedIngredientNutrition.fat}</li>
-                  <li><strong>Carbs:</strong> {selectedIngredientNutrition.carbs}</li>
-                  <li className="text-xs text-muted-foreground pt-1"><em>Source: {selectedIngredientNutrition.source}</em></li>
+                  <li><strong>Calories:</strong> {selectedIngredientNutrition.calories ? selectedIngredientNutrition.calories.toFixed(0) : 'N/A'} kcal</li>
+                  <li><strong>Protein:</strong> {selectedIngredientNutrition.protein || 'N/A'}</li>
+                  <li><strong>Fat:</strong> {selectedIngredientNutrition.fat || 'N/A'}</li>
+                  <li><strong>Carbs:</strong> {selectedIngredientNutrition.carbs || 'N/A'}</li>
+                  <li className="text-xs text-muted-foreground pt-1"><em>Source: {selectedIngredientNutrition.source || 'USDA FoodData Central API (per 100g)'}</em></li>
                 </ul>
               </Card>
             )}
@@ -385,13 +386,9 @@ export function NutritionalInfoDisplay({ estimation, uploadedImage }: Nutritiona
           isOpen={isLogMealFormOpen}
           setIsOpen={setIsLogMealFormOpen}
           onMealLogged={() => {
-            // Optionally, refresh data on the current page if needed, or simply show toast
-            // For now, primary refresh will be on the DailyLogPage itself when user navigates there
-            toast({ title: "Meal Logged from AI Analysis", description: `${estimation.dishName} added to today's log.`});
-            // If DailyLogPage is also using getLoggedMealsForDate for the current day, it would reflect.
-            // For now, we assume user navigates to DailyLogPage to see updated totals.
+            toast({ title: "Meal Logged from AI Analysis", description: `${estimation.dishName || "AI Analyzed Meal"} added to today's log.`});
           }}
-          dateToLog={format(new Date(), 'yyyy-MM-dd')} // Defaults to today
+          dateToLog={format(new Date(), 'yyyy-MM-dd')} 
           addLoggedMealAction={addLoggedMeal}
           initialData={logMealInitialData}
         />

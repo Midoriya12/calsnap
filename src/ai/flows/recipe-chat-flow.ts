@@ -10,8 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { mockRecipes } from '@/lib/mock-data';
+import { db } from '@/lib/firebase'; // Import Firestore
+import { collection, query, where, getDocs, limit, or } from 'firebase/firestore'; // Firestore query methods
 import type { Recipe } from '@/types';
+
 
 // Define a simpler schema for recipes returned by the tool to the LLM
 const RecipeShortSchema = z.object({
@@ -24,13 +26,13 @@ const RecipeShortSchema = z.object({
   // Only include a few key ingredients to keep the context for LLM concise
   keyIngredients: z.array(z.string()).describe("A few (2-3) primary ingredients of the recipe.").optional(),
 });
-export type RecipeShort = z.infer<typeof RecipeShortSchema>;
+type RecipeShort = z.infer<typeof RecipeShortSchema>;
 
 
 const searchRecipesTool = ai.defineTool(
   {
     name: 'searchRecipesTool',
-    description: 'Searches the CalSnap recipe database for recipes matching a query. Use this to find recipes by name, ingredients, cuisine, or dietary restrictions.',
+    description: 'Searches the CalSnap recipe database for recipes matching a query. Use this to find recipes by name, ingredients, cuisine, or dietary restrictions. Prioritize name matches.',
     inputSchema: z.object({
       searchTerm: z.string().describe('The user\'s query. This could be a recipe name, an ingredient, a cuisine type (e.g., Italian, Mexican), a dietary tag (e.g., Vegan, Gluten-Free, Keto), or a general description of what the user is looking for.'),
     }),
@@ -42,35 +44,61 @@ const searchRecipesTool = ai.defineTool(
   async ({ searchTerm }) => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     const results: RecipeShort[] = [];
-
-    mockRecipes.forEach(recipe => {
-      const recipeNameMatch = recipe.name.toLowerCase().includes(lowerSearchTerm);
-      const ingredientMatch = recipe.ingredients.some(ing => ing.toLowerCase().includes(lowerSearchTerm));
-      const cuisineMatch = recipe.cuisine.toLowerCase().includes(lowerSearchTerm);
-      const dietaryMatch = recipe.dietaryRestrictions.some(tag => tag.toLowerCase().includes(lowerSearchTerm));
-
-      if (recipeNameMatch || ingredientMatch || cuisineMatch || dietaryMatch) {
-        results.push({
-          id: recipe.id,
-          name: recipe.name,
-          cuisine: recipe.cuisine,
-          description: recipe.description.substring(0, 100) + (recipe.description.length > 100 ? '...' : ''), // Keep description brief
-          calories: recipe.calories,
-          dietaryRestrictions: recipe.dietaryRestrictions,
-          keyIngredients: recipe.ingredients.slice(0,3), // First 3 ingredients as key
-        });
-      }
-    });
-    
-    const limitedResults = results.slice(0, 5); // Limit to 5 results
     let searchSummary = `Searched for "${searchTerm}". `;
-    if (limitedResults.length > 0) {
-      searchSummary += `Found ${limitedResults.length} relevant recipe(s).`;
-    } else {
-      searchSummary += "Found no direct matches in the current recipe database.";
+
+    try {
+      const recipesCollectionRef = collection(db, 'recipes');
+      // Simple name search for now. Firestore is case-sensitive.
+      // For more complex search (case-insensitive, partial match on ingredients array),
+      // a more sophisticated search solution (like Algolia or Typesense) or more complex queries/data duplication might be needed.
+      
+      // Attempt to find matches in name, cuisine, or dietaryRestrictions array
+      const nameQuery = query(recipesCollectionRef, where('name', '>=', searchTerm), where('name', '<=', searchTerm + '\uf8ff'), limit(5));
+      const cuisineQuery = query(recipesCollectionRef, where('cuisine', '==', searchTerm), limit(5)); // Exact match for cuisine for simplicity
+      const dietaryQuery = query(recipesCollectionRef, where('dietaryRestrictions', 'array-contains', searchTerm), limit(5)); // Case-sensitive array contains
+
+      const [nameSnapshot, cuisineSnapshot, dietarySnapshot] = await Promise.all([
+        getDocs(nameQuery),
+        getDocs(cuisineQuery),
+        getDocs(dietaryQuery)
+      ]);
+      
+      const foundIds = new Set<string>();
+
+      const processSnapshot = (snapshot: any) => { // Using 'any' for snapshot for brevity
+        snapshot.forEach((doc: any) => {
+          if (results.length < 5 && !foundIds.has(doc.id)) {
+            const recipeData = doc.data() as Recipe;
+            results.push({
+              id: doc.id,
+              name: recipeData.name,
+              cuisine: recipeData.cuisine,
+              description: recipeData.description.substring(0, 100) + (recipeData.description.length > 100 ? '...' : ''),
+              calories: recipeData.calories,
+              dietaryRestrictions: recipeData.dietaryRestrictions,
+              keyIngredients: recipeData.ingredients.slice(0,3),
+            });
+            foundIds.add(doc.id);
+          }
+        });
+      };
+
+      processSnapshot(nameSnapshot);
+      if (results.length < 5) processSnapshot(cuisineSnapshot);
+      if (results.length < 5) processSnapshot(dietarySnapshot);
+      
+      if (results.length > 0) {
+        searchSummary += `Found ${results.length} relevant recipe(s) in Firestore.`;
+      } else {
+        searchSummary += "Found no direct matches in the Firestore recipe database for this specific term. You might try rephrasing or searching for a broader category.";
+      }
+
+    } catch (e) {
+      console.error("Firestore search error in searchRecipesTool:", e);
+      searchSummary += "An error occurred while searching the recipe database.";
     }
 
-    return { foundRecipes: limitedResults, searchSummary };
+    return { foundRecipes: results.slice(0, 5), searchSummary }; // Ensure we don't exceed 5
   }
 );
 
@@ -103,9 +131,9 @@ const recipeChatPrompt = ai.definePrompt({
   prompt: `You are CalSnap AI, a friendly and helpful assistant for the CalSnap app.
 Your goal is to assist users with their questions about recipes, ingredients, calories, and meal planning.
 Always use the 'searchRecipesTool' to find specific recipes when the user asks for them or describes what they are looking for (e.g., "any vegan pasta recipes?", "how many calories in carbonara?", "ingredients for lentil soup").
-When presenting recipes, briefly mention the name, cuisine, and maybe 1-2 key ingredients or its description. If calories are available, mention them.
+When presenting recipes from the tool, briefly mention the name, cuisine, and maybe 1-2 key ingredients or its description. If calories are available, mention them.
 If a user asks about general calorie information for a food item not in a recipe, you can provide a general estimate but remind them that the CalSnap AI Meal Analyzer (photo upload) is best for specific meal estimations.
-If no recipes are found, say so politely and perhaps offer to search for something else.
+If no recipes are found by the tool, say so politely based on the tool's summary and perhaps offer to search for something else or suggest they broaden their search.
 Keep your responses concise and conversational.
 
 {{#if conversationHistory}}
@@ -136,4 +164,3 @@ const recipeChatFlow = ai.defineFlow(
     return output;
   }
 );
-
