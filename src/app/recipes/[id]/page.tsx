@@ -11,7 +11,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppHeader } from '@/components/layout/header'; // Import AppHeader
 
 async function getRecipe(id: string): Promise<Recipe | null> {
-  const fetchUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?id=${id}`;
+  // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:9002
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const fetchUrl = `${baseUrl}/api/recipes?id=${id}`;
   try {
     const response = await fetch(fetchUrl, { cache: 'no-store' }); 
     if (!response.ok) {
@@ -19,7 +21,6 @@ async function getRecipe(id: string): Promise<Recipe | null> {
         console.warn(`Recipe with ID ${id} not found (404) when fetching from ${fetchUrl}`);
         return null; 
       }
-      // For other errors, try to get more info, but don't assume JSON
       const errorText = await response.text();
       console.error(`Failed to fetch recipe ${id}. Status: ${response.status}. URL: ${fetchUrl}. Response Body: ${errorText.substring(0, 500)}`);
       return null;
@@ -27,7 +28,6 @@ async function getRecipe(id: string): Promise<Recipe | null> {
     const recipe: Recipe = await response.json();
     return recipe;
   } catch (error: any) {
-    // This block catches network errors (e.g., "fetch failed") or errors during response.json()
     let errorMessage = `Error fetching recipe by ID ${id} from URL: ${fetchUrl}.`;
     if (error instanceof Error) {
       errorMessage += ` Message: ${error.message}.`;

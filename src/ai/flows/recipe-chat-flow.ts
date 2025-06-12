@@ -40,10 +40,12 @@ const searchRecipesTool = ai.defineTool(
   async ({ searchTerm }) => {
     const results: RecipeShort[] = [];
     let searchSummary = `Searched for recipes related to "${searchTerm}" using TheMealDB. `;
+    // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:9002 for dev consistency
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
     try {
       // Fetch from our own API endpoint, which proxies to TheMealDB
-      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recipes?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${baseUrl}/api/recipes?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error(`API call failed with status: ${response.status}`);
       }
