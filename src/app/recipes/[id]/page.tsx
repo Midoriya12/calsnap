@@ -12,7 +12,7 @@ import { AppHeader } from '@/components/layout/header'; // Import AppHeader
 
 async function getRecipe(id: string): Promise<Recipe | null> {
   // Use NEXT_PUBLIC_APP_URL if available, otherwise default to localhost:9002
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const fetchUrl = `${baseUrl}/api/recipes?id=${id}`;
   try {
     const response = await fetch(fetchUrl, { cache: 'no-store' }); 
