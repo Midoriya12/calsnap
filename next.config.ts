@@ -3,12 +3,12 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
+
+  // Enable instrumentation for monitoring (Sentry, etc.)
+  experimental: {
+    instrumentationHook: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   images: {
     remotePatterns: [
       {

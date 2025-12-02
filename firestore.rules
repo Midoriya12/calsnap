@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail() {
+      return isAuthenticated() && request.auth.token.email_verified == true;
+    }
+
+    // User data rules
+    match /users/{userId} {
+
+      // Saved Meals Collection
+      match /savedMeals/{mealId} {
+        // Users can only read/write their own saved meals
+        // Email must be verified
+        allow read: if isOwner(userId) && isValidEmail();
+        allow create: if isOwner(userId) && isValidEmail()
+                      && validateSavedMeal();
+        allow update: if isOwner(userId) && isValidEmail()
+                      && validateSavedMeal();
+        allow delete: if isOwner(userId) && isValidEmail();
+
+        function validateSavedMeal() {
+          let meal = request.resource.data;
+          return meal.keys().hasAll(['userId', 'mealPhoto', 'aiEstimation', 'timestamp'])
+              && meal.userId == userId
+              && meal.mealPhoto is string
+              && meal.aiEstimation is map
+              && meal.timestamp is timestamp;
+        }
+      }
+
+      // Logged Meals Collection
+      match /loggedMeals/{mealId} {
+        // Users can only read/write their own logged meals
+        // Email must be verified
+        allow read: if isOwner(userId) && isValidEmail();
+        allow create: if isOwner(userId) && isValidEmail()
+                      && validateLoggedMeal();
+        allow update: if isOwner(userId) && isValidEmail()
+                      && validateLoggedMeal();
+        allow delete: if isOwner(userId) && isValidEmail();
+
+        function validateLoggedMeal() {
+          let meal = request.resource.data;
+          return meal.keys().hasAll(['userId', 'dateLogged', 'mealName', 'calories', 'timestamp'])
+              && meal.userId == userId
+              && meal.dateLogged is string
+              && meal.mealName is string
+              && meal.calories is number
+              && meal.calories >= 0
+              && meal.calories <= 10000  // Reasonable upper limit
+              && meal.timestamp is timestamp
+              // Optional fields validation
+              && (!meal.keys().hasAny(['protein']) || meal.protein is number)
+              && (!meal.keys().hasAny(['fat']) || meal.fat is number)
+              && (!meal.keys().hasAny(['carbs']) || meal.carbs is number)
+              && (!meal.keys().hasAny(['fiber']) || meal.fiber is number);
+        }
+      }
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

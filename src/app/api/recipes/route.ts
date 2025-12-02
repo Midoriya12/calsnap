@@ -1,6 +1,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import type { Recipe } from '@/types';
+import { rateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/rate-limit';
+import { recipeQuerySchema, validateQuery } from '@/lib/api-validation';
 
 // Helper function to transform TheMealDB API response to our Recipe type
 function transformMealDBRecipe(meal: any): Recipe {
@@ -44,7 +46,26 @@ function transformMealDBRecipe(meal: any): Recipe {
 
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting: 100 requests per minute
+  const rateLimitResult = rateLimit(request, {
+    maxRequests: 100,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   const { searchParams } = new URL(request.url);
+
+  // Validate query parameters (only if params exist)
+  if (searchParams.has('id') || searchParams.has('search')) {
+    const validation = validateQuery(recipeQuerySchema, searchParams);
+    if (!validation.success) {
+      return NextResponse.json({ message: validation.error }, { status: 400 });
+    }
+  }
+
   const recipeId = searchParams.get('id');
   const searchTerm = searchParams.get('search');
   // TheMealDB does not require an API key for public access.
@@ -77,16 +98,19 @@ export async function GET(request: NextRequest) {
     if (isSearchById) {
       if (data.meals && data.meals.length > 0) {
         const transformedRecipe = transformMealDBRecipe(data.meals[0]);
-        return NextResponse.json<Recipe>(transformedRecipe, { status: 200 });
+        const response = NextResponse.json<Recipe>(transformedRecipe, { status: 200 });
+        return addRateLimitHeaders(response, rateLimitResult);
       } else {
         return NextResponse.json({ message: `Recipe with id ${recipeId} not found` }, { status: 404 });
       }
     } else { // Handles search and default list
       if (data.meals && data.meals.length > 0) {
         const transformedRecipes = data.meals.map(transformMealDBRecipe);
-        return NextResponse.json<Recipe[]>(transformedRecipes, { status: 200 });
+        const response = NextResponse.json<Recipe[]>(transformedRecipes, { status: 200 });
+        return addRateLimitHeaders(response, rateLimitResult);
       } else {
-        return NextResponse.json<Recipe[]>([], { status: 200 }); // Return empty array for no results
+        const response = NextResponse.json<Recipe[]>([], { status: 200 }); // Return empty array for no results
+        return addRateLimitHeaders(response, rateLimitResult);
       }
     }
   } catch (error) {

@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "loggedMeals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateLogged",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "savedMeals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "savedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

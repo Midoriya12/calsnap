@@ -1,5 +1,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { rateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/rate-limit';
+import { nutritionQuerySchema, validateQuery } from '@/lib/api-validation';
 
 interface UsdaNutrient {
   nutrientId: number;
@@ -30,17 +32,30 @@ const findNutrientValue = (nutrients: UsdaNutrient[], namePart: string, fallback
 
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting: 60 requests per minute
+  const rateLimitResult = rateLimit(request, {
+    maxRequests: 60,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   const { searchParams } = new URL(request.url);
-  const ingredientName = searchParams.get('ingredientName');
+
+  // Validate query parameters
+  const validation = validateQuery(nutritionQuerySchema, searchParams);
+  if (!validation.success) {
+    return NextResponse.json({ message: validation.error }, { status: 400 });
+  }
+
+  const { ingredientName } = validation.data;
   const apiKey = process.env.USDA_API_KEY;
 
   if (!apiKey) {
     console.error("USDA_API_KEY is not set in environment variables.");
     return NextResponse.json({ message: "Server configuration error: Missing API key." }, { status: 500 });
-  }
-
-  if (!ingredientName) {
-    return NextResponse.json({ message: "Missing ingredientName query parameter" }, { status: 400 });
   }
 
   const usdaApiUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(ingredientName)}&pageSize=1&dataType=Foundation,SR%20Legacy`;
@@ -78,7 +93,8 @@ export async function GET(request: NextRequest) {
       source: "USDA FoodData Central API (per 100g)",
     };
 
-    return NextResponse.json(nutritionData, { status: 200 });
+    const response = NextResponse.json(nutritionData, { status: 200 });
+    return addRateLimitHeaders(response, rateLimitResult);
 
   } catch (error) {
     console.error(`Failed to fetch nutrition data for ${ingredientName}:`, error);
