@@ -1,0 +1,88 @@
+{
+  "name": "CalSnap - AI-Powered Meal Tracking",
+  "short_name": "CalSnap",
+  "description": "Snap your meals, track your nutrition, discover recipes - all powered by AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F3",
+  "theme_color": "#1C3D2B",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "health",
+    "food",
+    "lifestyle",
+    "productivity"
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Analyze Meal",
+      "short_name": "Analyze",
+      "description": "Take a photo and analyze your meal",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Daily Log",
+      "short_name": "Log",
+      "description": "View your daily nutrition log",
+      "url": "/daily-log",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Recipes",
+      "short_name": "Recipes",
+      "description": "Browse recipe catalog",
+      "url": "/recipes",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
